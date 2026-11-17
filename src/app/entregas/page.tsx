@@ -14,10 +14,11 @@ import {
   ExternalLink,
   Search,
   Filter,
+  Trash2,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
-import { DeliveryStatus } from '@/types';
+import { DeliveryItem, DeliveryStatus } from '@/types';
 
 export default function DeliveriesPage() {
   const { toast } = useToast();
@@ -25,6 +26,7 @@ export default function DeliveriesPage() {
   const [statusFilter, setStatusFilter] = useState<'todos' | DeliveryStatus>('todos');
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [deliveryToDelete, setDeliveryToDelete] = useState<DeliveryItem | null>(null);
 
   const [form, setForm] = useState({
     event_id: '',
@@ -100,7 +102,7 @@ export default function DeliveriesPage() {
             />
           </div>
 
-          <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto text-xs">
+          <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto no-scrollbar text-xs">
             {(['todos', 'a_fazer', 'em_producao', 'em_revisao', 'pronto', 'entregue'] as const).map(
               (st) => (
                 <button
@@ -180,6 +182,15 @@ export default function DeliveriesPage() {
                     >
                       <ExternalLink className="w-4 h-4" />
                     </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryToDelete(del)}
+                      className="p-2 rounded-xl text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                      title="Excluir entrega"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               );
@@ -265,6 +276,46 @@ export default function DeliveriesPage() {
               </button>
             </div>
           </form>
+        </Modal>
+
+        {/* Modal Confirmar Exclusão de Entrega */}
+        <Modal
+          isOpen={Boolean(deliveryToDelete)}
+          onClose={() => setDeliveryToDelete(null)}
+          title="Excluir Entrega"
+          subtitle="Esta ação não pode ser desfeita"
+          maxWidth="md"
+        >
+          {deliveryToDelete && (
+            <div className="space-y-4 text-xs">
+              <p className="text-zinc-600 leading-relaxed">
+                Tem certeza que deseja excluir a entrega{' '}
+                <strong className="text-zinc-900">{deliveryToDelete.name}</strong> do evento{' '}
+                <strong className="text-zinc-900">{deliveryToDelete.event_name}</strong>?
+              </p>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setDeliveryToDelete(null)}
+                  className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-700"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    deleteDelivery(deliveryToDelete.id);
+                    setDeliveryToDelete(null);
+                    toast('Entrega excluída com sucesso.', 'info');
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-medium cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Excluir Entrega</span>
+                </button>
+              </div>
+            </div>
+          )}
         </Modal>
       </div>
     </AppShell>
