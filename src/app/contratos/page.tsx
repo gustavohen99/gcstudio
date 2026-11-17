@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
 import { useAppStore } from '@/lib/store';
+import { useToday } from '@/lib/useToday';
 import { formatDate, getWhatsAppUrl, sortEventsByProximity } from '@/lib/utils';
 import {
   FileText,
@@ -26,6 +27,7 @@ import { Contract, ContractStatus } from '@/types';
 export default function ContractsPage() {
   const { toast } = useToast();
   const { contracts, clients, events, addContract, updateContract } = useAppStore();
+  const today = useToday();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'todos' | ContractStatus>('todos');
   const [modalOpen, setModalOpen] = useState(false);
@@ -310,7 +312,7 @@ E por estarem justos e contratados, assinam eletronicamente o presente instrumen
                   className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900 bg-white"
                 >
                   <option value="">Selecione...</option>
-                  {sortEventsByProximity(events).map((ev) => (
+                  {sortEventsByProximity(events, today).map((ev) => (
                       <option key={ev.id} value={ev.id}>
                         {ev.name} ({ev.date})
                       </option>

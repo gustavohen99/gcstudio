@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { useAppStore } from '@/lib/store';
+import { useToday } from '@/lib/useToday';
 import { formatCurrency, formatDate, getPaymentStatusConfig, sortEventsByProximity } from '@/lib/utils';
 import {
   DollarSign,
@@ -23,6 +24,7 @@ import { PaymentStatus } from '@/types';
 export default function FinancePage() {
   const { toast } = useToast();
   const { payments, events, clients, addPayment, updatePayment } = useAppStore();
+  const today = useToday();
   const [statusFilter, setStatusFilter] = useState<'todos' | PaymentStatus>('todos');
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -302,7 +304,7 @@ export default function FinancePage() {
                 className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900 bg-white"
               >
                 <option value="">Selecione o evento...</option>
-                {sortEventsByProximity(events).map((ev) => (
+                {sortEventsByProximity(events, today).map((ev) => (
                     <option key={ev.id} value={ev.id}>
                       {ev.name} ({ev.client_name}) — {formatCurrency(ev.value)}
                     </option>

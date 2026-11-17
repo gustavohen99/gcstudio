@@ -57,22 +57,21 @@ export function formatDateFull(dateString: string | undefined): string {
   }
 }
 
-function getLocalTodayStr(): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
 /**
- * Ordena eventos em ordem cronológica a partir de hoje:
+ * Ordena eventos em ordem cronológica a partir de `today` (YYYY-MM-DD):
  * 1. Eventos futuros / de hoje primeiro, do mais próximo de acontecer ao mais distante.
  * 2. Eventos já realizados depois, do mais recente ao mais antigo.
+ * Se `today` ainda não estiver disponível (pré-render), ordena apenas cronologicamente.
+ * Use o hook `useToday()` para obter `today` sem quebrar o build.
  */
-export function sortEventsByProximity<T extends { date?: string; time?: string }>(list: T[]): T[] {
-  const today = getLocalTodayStr();
+export function sortEventsByProximity<T extends { date?: string; time?: string }>(
+  list: T[],
+  today?: string | null
+): T[] {
   const key = (e: T) => `${e.date || '9999-12-31'}T${e.time || '00:00'}`;
+  if (!today) {
+    return [...list].sort((a, b) => key(a).localeCompare(key(b)));
+  }
   const upcoming = list.filter((e) => (e.date || '9999-12-31') >= today);
   const past = list.filter((e) => (e.date || '9999-12-31') < today);
   upcoming.sort((a, b) => key(a).localeCompare(key(b)));

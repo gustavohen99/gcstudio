@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { useAppStore } from '@/lib/store';
+import { useToday } from '@/lib/useToday';
 import { useToast } from '@/components/ui/Toast';
 import {
   Users,
@@ -39,8 +40,9 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
     addGallery,
     addDelivery,
   } = useAppStore();
+  const today = useToday();
 
-  const sortedEvents = React.useMemo(() => sortEventsByProximity(events), [events]);
+  const sortedEvents = React.useMemo(() => sortEventsByProximity(events, today), [events, today]);
 
   // Client form state
   const [clientPhoneInput, setClientPhoneInput] = useState('');

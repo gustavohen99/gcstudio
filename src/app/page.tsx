@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
 import { useAppStore } from '@/lib/store';
+import { useToday } from '@/lib/useToday';
 import { formatCurrency, formatDate, getEventStatusConfig, getPaymentStatusConfig, sortEventsByProximity } from '@/lib/utils';
 import {
   Calendar,
@@ -35,6 +36,7 @@ function DashboardContent() {
     briefings,
     galleries,
   } = useAppStore();
+  const today = useToday();
 
   const [agendaView, setAgendaView] = useState<'lista' | 'semana' | 'mes'>('lista');
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
@@ -47,8 +49,8 @@ function DashboardContent() {
 
   // Metrics
   const nextEvents = useMemo(() => {
-    return sortEventsByProximity(events.filter((e) => e.status !== 'cancelado'));
-  }, [events]);
+    return sortEventsByProximity(events.filter((e) => e.status !== 'cancelado'), today);
+  }, [events, today]);
 
   const negotiationCount = useMemo(() => {
     return leads.filter((l) => l.status === 'NEGOCIAÇÃO' || l.status === 'ORÇAMENTO ENVIADO').length;

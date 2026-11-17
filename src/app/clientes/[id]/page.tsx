@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
 import { useAppStore } from '@/lib/store';
+import { useToday } from '@/lib/useToday';
 import {
   formatCurrency,
   formatDate,
@@ -53,6 +54,7 @@ function ClientProfileContent() {
     updateClient,
     deleteClient,
   } = useAppStore();
+  const today = useToday();
 
   const client = clients.find((c) => c.id === clientId);
   const [activeTab, setActiveTab] = useState<
@@ -89,7 +91,7 @@ function ClientProfileContent() {
     );
   }
 
-  const clientEvents = sortEventsByProximity(events.filter((e) => e.client_id === client.id));
+  const clientEvents = sortEventsByProximity(events.filter((e) => e.client_id === client.id), today);
   const clientQuotes = quotes.filter((q) => q.client_id === client.id);
   const clientContracts = contracts.filter((c) => c.client_id === client.id);
   const clientPayments = payments.filter((p) => p.client_id === client.id);

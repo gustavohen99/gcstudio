@@ -14,6 +14,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
+import { useToday } from '@/lib/useToday';
 import { formatCurrency, formatDate, sortEventsByProximity } from '@/lib/utils';
 
 interface GlobalSearchModalProps {
@@ -24,6 +25,7 @@ interface GlobalSearchModalProps {
 export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose }) => {
   const [query, setQuery] = useState('');
   const { clients, events, quotes, contracts, payments, galleries } = useAppStore();
+  const today = useToday();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -58,7 +60,8 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
           e.client_name.toLowerCase().includes(q) ||
           e.location.toLowerCase().includes(q) ||
           e.type.toLowerCase().includes(q)
-      )
+      ),
+      today
     );
 
     const matchedQuotes = quotes.filter(
@@ -105,7 +108,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
       payments: matchedPayments,
       galleries: matchedGalleries,
     };
-  }, [query, clients, events, quotes, contracts, payments, galleries]);
+  }, [query, clients, events, quotes, contracts, payments, galleries, today]);
 
   if (!isOpen) return null;
 

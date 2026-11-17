@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
 import { useAppStore } from '@/lib/store';
+import { useToday } from '@/lib/useToday';
 import { formatCurrency, formatDate, getEventStatusConfig, resolveEventPackage, sortEventsByProximity } from '@/lib/utils';
 import {
   Calendar,
@@ -24,6 +25,7 @@ import { EventStatus } from '@/types';
 
 export default function EventsPage() {
   const { events, packages } = useAppStore();
+  const today = useToday();
   const [viewMode, setViewMode] = useState<'lista' | 'calendario'>('lista');
   const [filterStatus, setFilterStatus] = useState<string>('todos');
   const [sortOrder, setSortOrder] = useState<'proximos' | 'recentes' | 'antigos'>('proximos');
@@ -54,13 +56,13 @@ export default function EventsPage() {
       return true;
     });
 
-    if (sortOrder === 'proximos') return sortEventsByProximity(filtered);
+    if (sortOrder === 'proximos') return sortEventsByProximity(filtered, today);
 
     const key = (e: { date?: string; time?: string }) => `${e.date || ''}T${e.time || '00:00'}`;
     return [...filtered].sort((a, b) =>
       sortOrder === 'recentes' ? key(b).localeCompare(key(a)) : key(a).localeCompare(key(b))
     );
-  }, [events, search, filterStatus, sortOrder]);
+  }, [events, search, filterStatus, sortOrder, today]);
 
   return (
     <AppShell>
