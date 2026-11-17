@@ -260,6 +260,36 @@ export const DEFAULT_GC_PACKAGES: Record<string, { name: string; description: st
       'Galeria digital para seleção',
     ],
   },
+  'pkg-15-1': {
+    name: 'PACOTE 1 — 15 Anos',
+    description: 'Cobertura 5h (Foto).',
+    price: 1200,
+    features: [
+      'Cobertura 5h (Foto)',
+      'Entregas: Todas as fotos editadas em alta resolução',
+    ],
+  },
+  'pkg-15-2': {
+    name: 'PACOTE 2 — 15 Anos',
+    description: 'Ensaio Fotográfico (Externo) + Cobertura 5h (Foto).',
+    price: 1500,
+    features: [
+      'Ensaio Fotográfico (Externo)',
+      'Cobertura 5h (Foto)',
+      'Entregas: Todas as fotos editadas em alta resolução',
+    ],
+  },
+  'pkg-15-3': {
+    name: 'PACOTE 3 — 15 Anos',
+    description:
+      'Ensaio Fotográfico (Externo) + Cobertura 5h (Foto) + Vídeo dos melhores momentos (3 a 5 minutos de duração).',
+    price: 1800,
+    features: [
+      'Ensaio Fotográfico (Externo)',
+      'Cobertura 5h (Foto)',
+      'Vídeo dos melhores momentos (3 a 5 minutos de duração)',
+    ],
+  },
 };
 
 export function resolveEventPackage(
@@ -345,12 +375,13 @@ export function resolveEventPackage(
   if (packageId && DEFAULT_GC_PACKAGES[packageId]) {
     fallbackKey = packageId;
   } else if (safeName) {
+    const is15Anos = /15\s*anos/i.test(safeName);
     if (/pacote\s*1\b/i.test(safeName) || /pacote\s*01\b/i.test(safeName) || safeName === '1') {
-      fallbackKey = 'pkg-1';
+      fallbackKey = is15Anos ? 'pkg-15-1' : 'pkg-1';
     } else if (/pacote\s*2\b/i.test(safeName) || /pacote\s*02\b/i.test(safeName) || safeName === '2') {
-      fallbackKey = 'pkg-2';
+      fallbackKey = is15Anos ? 'pkg-15-2' : 'pkg-2';
     } else if (/pacote\s*3\b/i.test(safeName) || /pacote\s*03\b/i.test(safeName) || safeName === '3') {
-      fallbackKey = 'pkg-3';
+      fallbackKey = is15Anos ? 'pkg-15-3' : 'pkg-3';
     } else if (/film/i.test(safeName) || /v[ií]deo/i.test(safeName)) {
       fallbackKey = 'pkg-film';
     } else if (/ensaio/i.test(safeName)) {

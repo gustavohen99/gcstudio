@@ -102,7 +102,25 @@ const hydrateStoreState = (
   parsed: Partial<AppStoreState>,
   defaultState: AppStoreState
 ): AppStoreState => {
-  const packagesList = parsed.packages || initialPackages;
+  const rawPackages = parsed.packages || initialPackages;
+  const has15AnosPackages = rawPackages.some(
+    (p) => p.id?.startsWith('pkg-15-') || p.category === '15 anos'
+  );
+  const packagesList = has15AnosPackages
+    ? rawPackages
+    : [...rawPackages, ...initialPackages.filter((p) => p.id.startsWith('pkg-15-'))];
+
+  const rawServices = parsed.services || initialServices;
+  const has15AnosServices = rawServices.some(
+    (s) =>
+      s.id === 'srv-making-off-15' ||
+      s.id === 'srv-ensaio-studio-15' ||
+      s.category === '15 anos'
+  );
+  const servicesList = has15AnosServices
+    ? rawServices
+    : [...rawServices, ...initialServices.filter((s) => s.category === '15 anos')];
+
   const loadedEvents: EventItem[] = (parsed.events || initialEvents).map((ev: EventItem) => {
     const pkg = resolveEventPackage(
       packagesList,
@@ -164,6 +182,8 @@ const hydrateStoreState = (
   return {
     ...defaultState,
     ...parsed,
+    packages: packagesList,
+    services: servicesList,
     events: loadedEvents,
     payments: loadedPayments,
     settings: {

@@ -559,11 +559,22 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                   value={eventForm.client_id}
                   onChange={(e) => {
                     const c = clients.find((cli) => cli.id === e.target.value);
+                    const categoryPkg = c
+                      ? packages.find((p) => p.category === c.event_type)
+                      : undefined;
                     setEventForm({
                       ...eventForm,
                       client_id: e.target.value,
                       name: c ? c.name : eventForm.name,
                       type: c ? c.event_type : eventForm.type,
+                      ...(categoryPkg
+                        ? {
+                            package_name: categoryPkg.name,
+                            package_id: categoryPkg.id,
+                            package_description: categoryPkg.description,
+                            value: categoryPkg.price,
+                          }
+                        : {}),
                     });
                   }}
                   className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900 bg-white focus:outline-hidden focus:border-[#C5A880]"
@@ -761,7 +772,22 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                 <select
                   required
                   value={quoteForm.client_id}
-                  onChange={(e) => setQuoteForm({ ...quoteForm, client_id: e.target.value })}
+                  onChange={(e) => {
+                    const c = clients.find((cli) => cli.id === e.target.value);
+                    const categoryPkg = c
+                      ? packages.find((p) => p.category === c.event_type)
+                      : undefined;
+                    setQuoteForm({
+                      ...quoteForm,
+                      client_id: e.target.value,
+                      ...(categoryPkg
+                        ? {
+                            package_name: categoryPkg.name,
+                            total_value: categoryPkg.price,
+                          }
+                        : {}),
+                    });
+                  }}
                   className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900 bg-white focus:outline-hidden focus:border-[#C5A880]"
                 >
                   <option value="">Selecione...</option>

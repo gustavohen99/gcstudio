@@ -48,15 +48,16 @@ export function EditorialProposalView({ quote }: EditorialProposalViewProps) {
   const eventType = quote?.event_type || 'Casamento';
   const eventDate = quote?.event_date || '2026-11-21';
   const isQuoteAccepted = quote?.status === 'aceito';
+  const is15Anos = eventType === '15 anos';
 
   // Interactive Package Selection State
-  // Default to Pacote 1, Pacote 2, or Pacote 3
-  const [selectedPhotoPkg, setSelectedPhotoPkg] = useState<'pkg-1' | 'pkg-2' | 'pkg-3'>(
+  const defaultPkgPrefix = is15Anos ? 'pkg-15-' : 'pkg-';
+  const [selectedPhotoPkg, setSelectedPhotoPkg] = useState<string>(
     quote?.package_name?.includes('3')
-      ? 'pkg-3'
+      ? `${defaultPkgPrefix}3`
       : quote?.package_name?.includes('2')
-      ? 'pkg-2'
-      : 'pkg-1'
+      ? `${defaultPkgPrefix}2`
+      : `${defaultPkgPrefix}1`
   );
 
   // Film option toggle (default false so client chooses freely)
@@ -73,56 +74,95 @@ export function EditorialProposalView({ quote }: EditorialProposalViewProps) {
   // Lightbox for Portfolio Photos
   const [activePhotoLightbox, setActivePhotoLightbox] = useState<number | null>(null);
 
-  // Packages definitions matching GC Studio exact prices and text:
-  // PACOTE 1: R$ 1.000
-  // PACOTE 2: R$ 1.300
-  // PACOTE 3: R$ 1.600
-  const photoPackages = [
-    {
-      id: 'pkg-1',
-      title: 'PACOTE 1',
-      subtitle: 'Cerimônia + Recepção + Festa',
-      price: 1000,
-      image:
-        'https://im-sl-cf.wfolio.photo/x/7Z8UNlpghPzz0rsayy75bH64K0SEvQo2/PGIk4iZ_fpOItzca9F2eViixgLyWWZUx/VVRAd73OqOilZctaqOftyGa2B-qINCNB/Mpn277zsuYl8U6-n45m1LqOQLRiZ7fTJ/rDR1M1yU7L4J4_CpPdecFTc4XkvzTxCr/FYyV0VEIT5fuEUvK3F6SYzuV1ay1hGkZ.jpg',
-      features: [
-        'Cobertura da Cerimônia',
-        '+ Recepção + 1h festa',
-        'Entregas: Todas as fotos editadas em alta resolução.',
-        'Prazo de entrega: Até 10 dias úteis.',
-      ],
-    },
-    {
-      id: 'pkg-2',
-      title: 'PACOTE 2',
-      subtitle: 'Casamento no Civil + Celebração',
-      badge: 'Mais Escolhido',
-      price: 1300,
-      image:
-        'https://im-sl-cf.wfolio.photo/x/7Z8UNlpghPzz0rsayy75bHTYiFogT9qJ/6V2KLZ5-pPO9hAokFL7l71SmiMMKjYUW/C2yCIXlcHjlJ466IhiQaX781TMVNDisq/FPxr4jFQ09cL2M4YoxN4TCp5U-aa04h8/QPxC8jCErNHciU2lUUm8DbFp4JsEIOYO/gAazmoklZnLzX1PCuD2PAcTGdqNOlCN2.jpg',
-      features: [
-        'Casamento no Civil',
-        '+ Cobertura da Cerimônia + Recepção + 1h festa',
-        'Entregas: Todas as fotos editadas em alta resolução.',
-        'Prazo de entrega: Até 10 dias úteis.',
-      ],
-    },
-    {
-      id: 'pkg-3',
-      title: 'PACOTE 3',
-      subtitle: 'Pré-Wedding + Civil + Cerimônia + Festa',
-      badge: 'Completo',
-      price: 1600,
-      image:
-        'https://im-sl-cf.wfolio.photo/x/7Z8UNlpghPzz0rsayy75bH64K0SEvQo2/PGIk4iZ_fpOItzca9F2eViixgLyWWZUx/VVRAd73OqOilZctaqOftyGa2B-qINCNB/Mpn277zsuYmGYb9MB5xqrUXXAZ3lfaXd/PP2vw8BkjCQQnDyT3L68HTbxkT1o8cD4/jLiAS9gxK8z5cO_OanOrLJ0m-2GmjZd3.jpg',
-      features: [
-        'Pré-Wedding + Casamento no Civil',
-        '+ Cobertura da Cerimônia + Recepção + 1h festa',
-        'Entregas: Todas as fotos editadas em alta resolução.',
-        'Prazo de entrega: Até 10 dias úteis.',
-      ],
-    },
-  ];
+  const photoPackages = is15Anos
+    ? [
+        {
+          id: 'pkg-15-1',
+          title: 'PACOTE 1',
+          subtitle: 'Cobertura 5h (Foto)',
+          price: 1200,
+          image:
+            'https://im-sl-cf.wfolio.photo/x/7Z8UNlpghPzz0rsayy75bH64K0SEvQo2/PGIk4iZ_fpOItzca9F2eViixgLyWWZUx/VVRAd73OqOilZctaqOftyGa2B-qINCNB/Mpn277zsuYl8U6-n45m1LqOQLRiZ7fTJ/rDR1M1yU7L4J4_CpPdecFTc4XkvzTxCr/FYyV0VEIT5fuEUvK3F6SYzuV1ay1hGkZ.jpg',
+          features: [
+            'Cobertura 5h (Foto)',
+            'Entregas: Todas as fotos editadas em alta resolução.',
+          ],
+        },
+        {
+          id: 'pkg-15-2',
+          title: 'PACOTE 2',
+          subtitle: 'Ensaio Externo + Cobertura 5h',
+          badge: 'Mais Escolhido',
+          price: 1500,
+          image:
+            'https://im-sl-cf.wfolio.photo/x/7Z8UNlpghPzz0rsayy75bHTYiFogT9qJ/6V2KLZ5-pPO9hAokFL7l71SmiMMKjYUW/C2yCIXlcHjlJ466IhiQaX781TMVNDisq/FPxr4jFQ09cL2M4YoxN4TCp5U-aa04h8/QPxC8jCErNHciU2lUUm8DbFp4JsEIOYO/gAazmoklZnLzX1PCuD2PAcTGdqNOlCN2.jpg',
+          features: [
+            'Ensaio Fotográfico (Externo)',
+            'Cobertura 5h (Foto)',
+            'Entregas: Todas as fotos editadas em alta resolução.',
+          ],
+        },
+        {
+          id: 'pkg-15-3',
+          title: 'PACOTE 3',
+          subtitle: 'Ensaio + Cobertura 5h + Vídeo',
+          badge: 'Completo',
+          price: 1800,
+          image:
+            'https://im-sl-cf.wfolio.photo/x/7Z8UNlpghPzz0rsayy75bH64K0SEvQo2/PGIk4iZ_fpOItzca9F2eViixgLyWWZUx/VVRAd73OqOilZctaqOftyGa2B-qINCNB/Mpn277zsuYmGYb9MB5xqrUXXAZ3lfaXd/PP2vw8BkjCQQnDyT3L68HTbxkT1o8cD4/jLiAS9gxK8z5cO_OanOrLJ0m-2GmjZd3.jpg',
+          features: [
+            'Ensaio Fotográfico (Externo)',
+            'Cobertura 5h (Foto)',
+            '+ Vídeo dos melhores momentos (3 a 5 minutos de duração)',
+          ],
+        },
+      ]
+    : [
+        {
+          id: 'pkg-1',
+          title: 'PACOTE 1',
+          subtitle: 'Cerimônia + Recepção + Festa',
+          price: 1000,
+          image:
+            'https://im-sl-cf.wfolio.photo/x/7Z8UNlpghPzz0rsayy75bH64K0SEvQo2/PGIk4iZ_fpOItzca9F2eViixgLyWWZUx/VVRAd73OqOilZctaqOftyGa2B-qINCNB/Mpn277zsuYl8U6-n45m1LqOQLRiZ7fTJ/rDR1M1yU7L4J4_CpPdecFTc4XkvzTxCr/FYyV0VEIT5fuEUvK3F6SYzuV1ay1hGkZ.jpg',
+          features: [
+            'Cobertura da Cerimônia',
+            '+ Recepção + 1h festa',
+            'Entregas: Todas as fotos editadas em alta resolução.',
+            'Prazo de entrega: Até 10 dias úteis.',
+          ],
+        },
+        {
+          id: 'pkg-2',
+          title: 'PACOTE 2',
+          subtitle: 'Casamento no Civil + Celebração',
+          badge: 'Mais Escolhido',
+          price: 1300,
+          image:
+            'https://im-sl-cf.wfolio.photo/x/7Z8UNlpghPzz0rsayy75bHTYiFogT9qJ/6V2KLZ5-pPO9hAokFL7l71SmiMMKjYUW/C2yCIXlcHjlJ466IhiQaX781TMVNDisq/FPxr4jFQ09cL2M4YoxN4TCp5U-aa04h8/QPxC8jCErNHciU2lUUm8DbFp4JsEIOYO/gAazmoklZnLzX1PCuD2PAcTGdqNOlCN2.jpg',
+          features: [
+            'Casamento no Civil',
+            '+ Cobertura da Cerimônia + Recepção + 1h festa',
+            'Entregas: Todas as fotos editadas em alta resolução.',
+            'Prazo de entrega: Até 10 dias úteis.',
+          ],
+        },
+        {
+          id: 'pkg-3',
+          title: 'PACOTE 3',
+          subtitle: 'Pré-Wedding + Civil + Cerimônia + Festa',
+          badge: 'Completo',
+          price: 1600,
+          image:
+            'https://im-sl-cf.wfolio.photo/x/7Z8UNlpghPzz0rsayy75bH64K0SEvQo2/PGIk4iZ_fpOItzca9F2eViixgLyWWZUx/VVRAd73OqOilZctaqOftyGa2B-qINCNB/Mpn277zsuYmGYb9MB5xqrUXXAZ3lfaXd/PP2vw8BkjCQQnDyT3L68HTbxkT1o8cD4/jLiAS9gxK8z5cO_OanOrLJ0m-2GmjZd3.jpg',
+          features: [
+            'Pré-Wedding + Casamento no Civil',
+            '+ Cobertura da Cerimônia + Recepção + 1h festa',
+            'Entregas: Todas as fotos editadas em alta resolução.',
+            'Prazo de entrega: Até 10 dias úteis.',
+          ],
+        },
+      ];
 
   // Filmagem: R$ 1.800
   const filmPackage = {
@@ -137,31 +177,42 @@ export function EditorialProposalView({ quote }: EditorialProposalViewProps) {
     ],
   };
 
-  // Adicionais:
-  // Quadro para Recepção: R$ 220
-  // Story Maker: R$ 550
-  // Making Off Noiva: R$ 300
-  const addonsList = [
-    {
-      id: 'addon-quadro',
-      title: 'Quadro para Recepção',
-      desc: 'Um detalhe especial para receber seus convidados com estilo.',
-      spec: 'Tamanho 50×70cm',
-      price: 220,
-    },
-    {
-      id: 'addon-storymaker',
-      title: 'Story Maker',
-      desc: 'Conteúdo dinâmico para postar nos stories em tempo real.',
-      price: 550,
-    },
-    {
-      id: 'addon-making-noiva',
-      title: 'Making Off Noiva',
-      desc: 'Os bastidores do preparo, cheios de emoção e detalhes.',
-      price: 300,
-    },
-  ];
+  const addonsList = is15Anos
+    ? [
+        {
+          id: 'addon-making-off-15',
+          title: 'Registro Making Off',
+          desc: 'Os bastidores cheios de emoção antes do grande momento.',
+          price: 300,
+        },
+        {
+          id: 'addon-ensaio-studio-15',
+          title: 'Ensaio em Studio',
+          desc: 'Fotos produzidas em ambiente controlado, com iluminação profissional.',
+          price: 280,
+        },
+      ]
+    : [
+        {
+          id: 'addon-quadro',
+          title: 'Quadro para Recepção',
+          desc: 'Um detalhe especial para receber seus convidados com estilo.',
+          spec: 'Tamanho 50×70cm',
+          price: 220,
+        },
+        {
+          id: 'addon-storymaker',
+          title: 'Story Maker',
+          desc: 'Conteúdo dinâmico para postar nos stories em tempo real.',
+          price: 550,
+        },
+        {
+          id: 'addon-making-noiva',
+          title: 'Making Off Noiva',
+          desc: 'Os bastidores do preparo, cheios de emoção e detalhes.',
+          price: 300,
+        },
+      ];
 
   // Portfolio Fotos matching real GC Studio weddings
   const portfolioPhotos = [
@@ -187,7 +238,7 @@ export function EditorialProposalView({ quote }: EditorialProposalViewProps) {
 
   // Calculation of total investment
   const currentPhotoPrice =
-    photoPackages.find((p) => p.id === selectedPhotoPkg)?.price || 1000;
+    photoPackages.find((p) => p.id === selectedPhotoPkg)?.price || photoPackages[0].price;
   const currentFilmPrice = includeFilm ? filmPackage.price : 0;
   const currentAddonsPrice = selectedAddons.reduce((sum, addId) => {
     const item = addonsList.find((a) => a.id === addId);
@@ -296,7 +347,9 @@ export function EditorialProposalView({ quote }: EditorialProposalViewProps) {
             </div>
 
             <div className="max-w-md text-xs sm:text-sm text-zinc-300 font-light leading-relaxed border-l-2 border-[#C5A880]/60 pl-4 py-1 italic">
-              &ldquo;A fotografia de casamento é a forma de eternizar os momentos mais especiais do seu grande dia. Com um olhar atento e sensível, registramos cada emoção, detalhe e sorriso, transformando instantes únicos em lembranças que durarão para sempre.&rdquo;
+              {is15Anos
+                ? '“A fotografia de 15 anos eterniza uma noite inesquecível, repleta de brilho, personalidade e emoção. Com um olhar atento e sensível, registramos cada instante único em lembranças para a vida toda.”'
+                : '“A fotografia de casamento é a forma de eternizar os momentos mais especiais do seu grande dia. Com um olhar atento e sensível, registramos cada emoção, detalhe e sorriso, transformando instantes únicos em lembranças que durarão para sempre.”'}
             </div>
           </div>
         </div>
@@ -406,86 +459,88 @@ export function EditorialProposalView({ quote }: EditorialProposalViewProps) {
         </div>
       </section>
 
-      {/* 3. Seção FILMAGEM */}
-      <section className="py-16 px-4 sm:px-6 max-w-4xl mx-auto space-y-8">
-        <div className="text-center space-y-2">
-          <h2 className="font-serif-brand text-3xl sm:text-5xl font-light text-white tracking-wide">
-            Filmagem
-          </h2>
-          <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto font-light">
-            Video Profissional — Melhores momentos, cerimônia e trailer.
-          </p>
-        </div>
+      {/* 3. Seção FILMAGEM (Casamento) */}
+      {!is15Anos && (
+        <section className="py-16 px-4 sm:px-6 max-w-4xl mx-auto space-y-8">
+          <div className="text-center space-y-2">
+            <h2 className="font-serif-brand text-3xl sm:text-5xl font-light text-white tracking-wide">
+              Filmagem
+            </h2>
+            <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto font-light">
+              Video Profissional — Melhores momentos, cerimônia e trailer.
+            </p>
+          </div>
 
-        <div
-          onClick={() => setIncludeFilm(!includeFilm)}
-          className={`p-8 sm:p-10 rounded-3xl border transition-all cursor-pointer relative ${
-            includeFilm
-              ? 'bg-[#141412] border-[#C5A880] shadow-2xl ring-1 ring-[#C5A880]/40'
-              : 'bg-zinc-900/60 border-white/10 hover:border-white/20'
-          }`}
-        >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-4 max-w-xl">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-[#C5A880]/20 flex items-center justify-center text-[#C5A880]">
-                  <Film className="w-4 h-4" />
+          <div
+            onClick={() => setIncludeFilm(!includeFilm)}
+            className={`p-8 sm:p-10 rounded-3xl border transition-all cursor-pointer relative ${
+              includeFilm
+                ? 'bg-[#141412] border-[#C5A880] shadow-2xl ring-1 ring-[#C5A880]/40'
+                : 'bg-zinc-900/60 border-white/10 hover:border-white/20'
+            }`}
+          >
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-4 max-w-xl">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-[#C5A880]/20 flex items-center justify-center text-[#C5A880]">
+                    <Film className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif-brand text-2xl font-normal text-white">
+                      {filmPackage.title}
+                    </h3>
+                    <span className="text-[11px] text-[#C5A880] uppercase tracking-wider font-semibold">
+                      {filmPackage.subtitle}
+                    </span>
+                  </div>
                 </div>
+
+                <div className="space-y-2 text-xs">
+                  {filmPackage.features.map((feat, idx) => (
+                    <div key={idx} className="flex items-start gap-2.5 text-zinc-300">
+                      <Check className="w-3.5 h-3.5 text-[#C5A880] shrink-0 mt-0.5" />
+                      <span className="font-light leading-relaxed">{feat}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="text-left md:text-right space-y-3 shrink-0">
                 <div>
-                  <h3 className="font-serif-brand text-2xl font-normal text-white">
-                    {filmPackage.title}
-                  </h3>
-                  <span className="text-[11px] text-[#C5A880] uppercase tracking-wider font-semibold">
-                    {filmPackage.subtitle}
+                  <span className="text-[10px] text-zinc-400 block uppercase tracking-wider">
+                    Investimento Filmagem
+                  </span>
+                  <span className="font-serif-brand text-3xl font-medium text-white">
+                    {formatCleanPrice(filmPackage.price)}
                   </span>
                 </div>
-              </div>
 
-              <div className="space-y-2 text-xs">
-                {filmPackage.features.map((feat, idx) => (
-                  <div key={idx} className="flex items-start gap-2.5 text-zinc-300">
-                    <Check className="w-3.5 h-3.5 text-[#C5A880] shrink-0 mt-0.5" />
-                    <span className="font-light leading-relaxed">{feat}</span>
-                  </div>
-                ))}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIncludeFilm(!includeFilm);
+                  }}
+                  className={`w-full sm:w-auto px-6 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    includeFilm
+                      ? 'bg-[#C5A880] text-zinc-950 shadow-md'
+                      : 'bg-white/10 hover:bg-white/20 text-white'
+                  }`}
+                >
+                  {includeFilm ? (
+                    <>
+                      <Check className="w-4 h-4 stroke-[3]" />
+                      <span>Filmagem Incluída</span>
+                    </>
+                  ) : (
+                    <span>+ Incluir Filmagem</span>
+                  )}
+                </button>
               </div>
-            </div>
-
-            <div className="text-left md:text-right space-y-3 shrink-0">
-              <div>
-                <span className="text-[10px] text-zinc-400 block uppercase tracking-wider">
-                  Investimento Filmagem
-                </span>
-                <span className="font-serif-brand text-3xl font-medium text-white">
-                  {formatCleanPrice(filmPackage.price)}
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIncludeFilm(!includeFilm);
-                }}
-                className={`w-full sm:w-auto px-6 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  includeFilm
-                    ? 'bg-[#C5A880] text-zinc-950 shadow-md'
-                    : 'bg-white/10 hover:bg-white/20 text-white'
-                }`}
-              >
-                {includeFilm ? (
-                  <>
-                    <Check className="w-4 h-4 stroke-[3]" />
-                    <span>Filmagem Incluída</span>
-                  </>
-                ) : (
-                  <span>+ Incluir Filmagem</span>
-                )}
-              </button>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* 4. Seção ADICIONAIS */}
       <section className="py-16 px-4 sm:px-6 max-w-6xl mx-auto space-y-10">
@@ -498,7 +553,11 @@ export function EditorialProposalView({ quote }: EditorialProposalViewProps) {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div
+          className={`grid grid-cols-1 gap-6 ${
+            is15Anos ? 'md:grid-cols-2 max-w-4xl mx-auto' : 'md:grid-cols-3'
+          }`}
+        >
           {addonsList.map((addon) => {
             const isSelected = selectedAddons.includes(addon.id);
 

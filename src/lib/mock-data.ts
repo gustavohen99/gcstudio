@@ -121,6 +121,45 @@ export const initialPackages: Package[] = [
     ],
     is_active: true,
   },
+  {
+    id: 'pkg-15-1',
+    name: 'PACOTE 1 — 15 Anos',
+    description: 'Cobertura 5h (Foto).',
+    price: 1200,
+    category: '15 anos',
+    features: [
+      'Cobertura 5h (Foto)',
+      'Entregas: Todas as fotos editadas em alta resolução',
+    ],
+    is_active: true,
+  },
+  {
+    id: 'pkg-15-2',
+    name: 'PACOTE 2 — 15 Anos',
+    description: 'Ensaio Fotográfico (Externo) + Cobertura 5h (Foto).',
+    price: 1500,
+    category: '15 anos',
+    features: [
+      'Ensaio Fotográfico (Externo)',
+      'Cobertura 5h (Foto)',
+      'Entregas: Todas as fotos editadas em alta resolução',
+    ],
+    is_active: true,
+  },
+  {
+    id: 'pkg-15-3',
+    name: 'PACOTE 3 — 15 Anos',
+    description:
+      'Ensaio Fotográfico (Externo) + Cobertura 5h (Foto) + Vídeo dos melhores momentos (3 a 5 minutos de duração).',
+    price: 1800,
+    category: '15 anos',
+    features: [
+      'Ensaio Fotográfico (Externo)',
+      'Cobertura 5h (Foto)',
+      'Vídeo dos melhores momentos (3 a 5 minutos de duração)',
+    ],
+    is_active: true,
+  },
 ];
 
 export const initialServices: ServiceItem[] = [
@@ -146,6 +185,22 @@ export const initialServices: ServiceItem[] = [
     description: 'Os bastidores do preparo da noiva, cheios de emoção e detalhes.',
     price: 300,
     category: 'Adicionais',
+    is_active: true,
+  },
+  {
+    id: 'srv-making-off-15',
+    name: 'Registro Making Off',
+    description: 'Os bastidores cheios de emoção antes do grande momento.',
+    price: 300,
+    category: '15 anos',
+    is_active: true,
+  },
+  {
+    id: 'srv-ensaio-studio-15',
+    name: 'Ensaio em Studio',
+    description: 'Fotos produzidas em ambiente controlado, com iluminação profissional.',
+    price: 280,
+    category: '15 anos',
     is_active: true,
   },
 ];
