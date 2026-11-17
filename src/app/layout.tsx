@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, Cormorant_Garamond, Playfair_Display, Cinzel } from 'next/font/google';
 import './globals.css';
 
@@ -32,6 +32,13 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: 'G&C Studio — Gestão de Clientes, Eventos e Entregas',
   description: 'Sistema interno exclusivo de gestão audiovisual, eventos, clientes e galerias de alta fidelidade para G&C Studio.',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#FBFBF9',
 };
 
 export default function RootLayout({

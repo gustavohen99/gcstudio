@@ -222,7 +222,7 @@ function ClientProfileContent() {
         </div>
 
         {/* 7 Abas do Cliente */}
-        <div className="border-b border-zinc-200 flex gap-2 overflow-x-auto text-xs font-medium">
+        <div className="border-b border-zinc-200 flex gap-2 overflow-x-auto no-scrollbar text-xs font-medium">
           {[
             { id: 'visao_geral', label: 'Visão Geral', icon: Users },
             { id: 'eventos', label: `Eventos (${clientEvents.length})`, icon: Calendar },

@@ -347,7 +347,7 @@ END $$;`;
         </div>
 
         {/* Tab Selector */}
-        <div className="border-b border-zinc-200 flex gap-2 overflow-x-auto text-xs font-medium">
+        <div className="border-b border-zinc-200 flex gap-2 overflow-x-auto no-scrollbar text-xs font-medium">
           {[
             { id: 'studio', label: 'Dados da G&C Studio', icon: Building2 },
             { id: 'pacotes', label: 'Pacotes & Serviços', icon: PackageIcon },

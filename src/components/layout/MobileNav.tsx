@@ -65,7 +65,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
   return (
     <>
       {/* Bottom Bar for Mobile */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-md border-t border-zinc-200 z-40 px-3 flex items-center justify-around shadow-lg">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 min-h-16 pb-[env(safe-area-inset-bottom)] bg-white/95 backdrop-blur-md border-t border-zinc-200 z-40 px-2 pt-1 flex items-center justify-around shadow-lg">
         {primaryItems.map((item) => {
           const active = isActive(item.href);
           const Icon = item.icon;
@@ -73,11 +73,13 @@ export const MobileNav: React.FC<MobileNavProps> = ({
             <Link
               key={item.name}
               href={item.href}
-              className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-colors ${
-                active ? 'text-[#C5A880] font-semibold' : 'text-zinc-600 hover:text-zinc-800'
+              className={`flex flex-col items-center justify-center min-w-[58px] py-1.5 px-2 rounded-xl transition-colors ${
+                active
+                  ? 'text-[#8B6E3F] bg-[#FAF7F2] font-semibold'
+                  : 'text-zinc-600 hover:text-zinc-800'
               }`}
             >
-              <Icon className="w-5 h-5 mb-0.5" />
+              <Icon className={`w-5 h-5 mb-0.5 ${active ? 'text-[#C5A880]' : ''}`} />
               <span className="text-[10px] tracking-tight">{item.name}</span>
             </Link>
           );
@@ -85,7 +87,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
 
         <button
           onClick={onCloseMenu}
-          className="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-zinc-600 hover:text-zinc-800 transition-colors"
+          className="flex flex-col items-center justify-center min-w-[58px] py-1.5 px-2 rounded-xl text-zinc-600 hover:text-zinc-800 transition-colors cursor-pointer"
           aria-label="Mais opções"
         >
           <MoreHorizontal className="w-5 h-5 mb-0.5" />
@@ -142,7 +144,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
                     key={item.name}
                     href={item.href}
                     onClick={onCloseMenu}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-colors ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-colors ${
                       active
                         ? 'bg-zinc-100 text-zinc-950 font-semibold'
                         : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
@@ -156,7 +158,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-zinc-100 bg-zinc-50 flex items-center justify-between">
+            <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-zinc-100 bg-zinc-50 flex items-center justify-between">
               <span className="text-xs text-zinc-500">G&C Studio Admin</span>
               <Link
                 href="/login"

@@ -15,7 +15,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
   return (
     <ToastProvider>
-      <div className="min-h-screen flex bg-[#FBFBF9] text-[#1A1A18]">
+      <div className="min-h-dvh flex bg-[#FBFBF9] text-[#1A1A18] overflow-x-clip">
         {/* Desktop Sidebar */}
         <Sidebar onOpenQuickCreate={() => setIsQuickCreateOpen(true)} />
 
@@ -27,7 +27,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
             onOpenQuickCreate={() => setIsQuickCreateOpen(true)}
           />
 
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-24 lg:pb-12">
+          <main className="flex-1 px-3.5 py-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-12">
             {children}
           </main>
         </div>

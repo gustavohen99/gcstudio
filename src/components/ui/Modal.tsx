@@ -49,27 +49,28 @@ export const Modal: React.FC<ModalProps> = ({
   }[maxWidth];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 overflow-y-auto">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
         onClick={onClose}
       />
 
-      {/* Modal Dialog */}
+      {/* Modal Dialog (Bottom Sheet no mobile, Dialog centralizado no desktop) */}
       <div
-        className={`relative w-full ${maxWidthClasses} bg-white rounded-2xl shadow-2xl border border-zinc-200/80 overflow-hidden z-10 animate-in zoom-in-95 fade-in duration-200 max-h-[90vh] flex flex-col`}
+        className={`relative w-full ${maxWidthClasses} bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl border border-zinc-200/80 overflow-hidden z-10 animate-in slide-in-from-bottom-4 sm:zoom-in-95 fade-in duration-200 max-h-[92dvh] sm:max-h-[90vh] flex flex-col`}
       >
         {/* Header */}
         {(title || subtitle) && (
-          <div className="px-6 py-5 border-b border-zinc-100 flex items-start justify-between bg-zinc-50/50">
-            <div>
-              {title && <h3 className="text-lg font-medium text-zinc-900 tracking-tight">{title}</h3>}
+          <div className="px-4 py-3.5 sm:px-6 sm:py-5 border-b border-zinc-100 flex items-start justify-between gap-3 bg-zinc-50/50 shrink-0">
+            <div className="min-w-0">
+              {title && <h3 className="text-base sm:text-lg font-medium text-zinc-900 tracking-tight">{title}</h3>}
               {subtitle && <p className="text-xs text-zinc-500 mt-0.5">{subtitle}</p>}
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+              className="p-2 -mr-1 rounded-xl text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors shrink-0 cursor-pointer"
+              aria-label="Fechar"
             >
               <X className="w-5 h-5" />
             </button>
@@ -77,7 +78,9 @@ export const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto flex-1">{children}</div>
+        <div className="p-4 sm:p-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-6 overflow-y-auto flex-1">
+          {children}
+        </div>
       </div>
     </div>
   );

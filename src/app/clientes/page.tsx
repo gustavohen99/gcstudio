@@ -75,15 +75,15 @@ export default function ClientsPage() {
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto text-xs">
-            <span className="text-zinc-400 text-xs flex items-center gap-1">
+          <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar text-xs">
+            <span className="text-zinc-400 text-xs flex items-center gap-1 shrink-0">
               <Filter className="w-3.5 h-3.5" /> Status:
             </span>
             {(['todos', 'ativo', 'concluido', 'inativo'] as const).map((st) => (
               <button
                 key={st}
                 onClick={() => setStatusFilter(st)}
-                className={`px-3 py-1.5 rounded-xl font-medium capitalize transition-colors ${
+                className={`px-3 py-1.5 rounded-xl font-medium capitalize whitespace-nowrap shrink-0 transition-colors ${
                   statusFilter === st
                     ? 'bg-zinc-900 text-white'
                     : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'

@@ -176,67 +176,67 @@ function DashboardContent() {
             </p>
           </div>
 
-          {/* Quick Action Shortcuts (Item 29) */}
-          <div className="flex items-center flex-wrap gap-2">
+          {/* Quick Action Shortcuts */}
+          <div className="grid grid-cols-3 sm:flex sm:items-center sm:flex-wrap gap-2 w-full lg:w-auto">
             <button
               onClick={() => openQuickWithTab('client')}
-              className="px-3 py-2 rounded-xl bg-white border border-[#EAEAE4] text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 text-xs font-medium shadow-xs transition-colors"
+              className="px-2.5 sm:px-3 py-2 rounded-xl bg-white border border-[#EAEAE4] text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 text-xs font-medium shadow-xs transition-colors text-center"
             >
               + Cliente
             </button>
             <button
               onClick={() => openQuickWithTab('lead')}
-              className="px-3 py-2 rounded-xl bg-white border border-[#EAEAE4] text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 text-xs font-medium shadow-xs transition-colors"
+              className="px-2.5 sm:px-3 py-2 rounded-xl bg-white border border-[#EAEAE4] text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 text-xs font-medium shadow-xs transition-colors text-center"
             >
               + Lead
             </button>
             <button
               onClick={() => openQuickWithTab('event')}
-              className="px-3 py-2 rounded-xl bg-white border border-[#EAEAE4] text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 text-xs font-medium shadow-xs transition-colors"
+              className="px-2.5 sm:px-3 py-2 rounded-xl bg-white border border-[#EAEAE4] text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 text-xs font-medium shadow-xs transition-colors text-center"
             >
               + Evento
             </button>
             <button
               onClick={() => openQuickWithTab('quote')}
-              className="px-3 py-2 rounded-xl bg-white border border-[#EAEAE4] text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 text-xs font-medium shadow-xs transition-colors"
+              className="px-2.5 sm:px-3 py-2 rounded-xl bg-white border border-[#EAEAE4] text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 text-xs font-medium shadow-xs transition-colors text-center"
             >
               + Orçamento
             </button>
             <button
               onClick={() => openQuickWithTab('gallery')}
-              className="px-3 py-2 rounded-xl bg-white border border-[#EAEAE4] text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 text-xs font-medium shadow-xs transition-colors"
+              className="px-2.5 sm:px-3 py-2 rounded-xl bg-white border border-[#EAEAE4] text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 text-xs font-medium shadow-xs transition-colors text-center"
             >
               + Galeria
             </button>
             <button
               onClick={() => openQuickWithTab('delivery')}
-              className="px-3 py-2 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-medium shadow-xs transition-colors flex items-center gap-1.5"
+              className="px-2.5 sm:px-3 py-2 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-medium shadow-xs transition-colors flex items-center justify-center gap-1"
             >
               <Plus className="w-3.5 h-3.5 text-[#C5A880]" />
-              + Entrega
+              <span>Entrega</span>
             </button>
           </div>
         </div>
 
         {/* 3 Cards Principais */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
           {/* Card 1 */}
-          <div className="p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs hover:border-zinc-300 transition-colors">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-zinc-500">Próximos eventos</span>
-              <div className="w-8 h-8 rounded-xl bg-amber-50 text-[#A8875B] flex items-center justify-center">
-                <Calendar className="w-4 h-4" />
+          <div className="p-3.5 sm:p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs hover:border-zinc-300 transition-colors">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] sm:text-xs font-medium text-zinc-500">Próximos eventos</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-50 text-[#A8875B] flex items-center justify-center shrink-0">
+                <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <div className="mt-3">
-              <div className="text-2xl font-semibold text-zinc-900 font-serif-brand">
+            <div className="mt-2 sm:mt-3">
+              <div className="text-xl sm:text-2xl font-semibold text-zinc-900 font-serif-brand">
                 {activeEvents.length}
               </div>
               <p className="text-[11px] text-zinc-400 mt-0.5">confirmados na temporada</p>
             </div>
             <Link
               href="/eventos"
-              className="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between text-[11px] font-medium text-[#C5A880] hover:text-[#9A7A4A]"
+              className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-zinc-100 flex items-center justify-between text-[11px] font-medium text-[#C5A880] hover:text-[#9A7A4A]"
             >
               <span>Ver cronograma</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -244,45 +244,45 @@ function DashboardContent() {
           </div>
 
           {/* Card 2 */}
-          <div className="p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs hover:border-zinc-300 transition-colors">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-zinc-500">Pagamentos pendentes</span>
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
-                <DollarSign className="w-4 h-4" />
+          <div className="p-3.5 sm:p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs hover:border-zinc-300 transition-colors">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] sm:text-xs font-medium text-zinc-500">A receber</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <div className="mt-3">
-              <div className="text-2xl font-semibold text-zinc-900 font-serif-brand">
+            <div className="mt-2 sm:mt-3">
+              <div className="text-lg sm:text-2xl font-semibold text-zinc-900 font-serif-brand truncate">
                 {formatCurrency(toReceive)}
               </div>
               <p className="text-[11px] text-zinc-400 mt-0.5">{pendingPayments.length} parcelas abertas</p>
             </div>
             <Link
               href="/financeiro"
-              className="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between text-[11px] font-medium text-[#C5A880] hover:text-[#9A7A4A]"
+              className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-zinc-100 flex items-center justify-between text-[11px] font-medium text-[#C5A880] hover:text-[#9A7A4A]"
             >
-              <span>Conferir recebíveis</span>
+              <span>Conferir</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
           {/* Card 3 */}
-          <div className="p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs hover:border-zinc-300 transition-colors">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-zinc-500">Entregas pendentes</span>
-              <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
-                <ImageIcon className="w-4 h-4" />
+          <div className="col-span-2 sm:col-span-1 p-3.5 sm:p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs hover:border-zinc-300 transition-colors">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] sm:text-xs font-medium text-zinc-500">Entregas pendentes</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center shrink-0">
+                <ImageIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <div className="mt-3">
-              <div className="text-2xl font-semibold text-zinc-900 font-serif-brand">
+            <div className="mt-2 sm:mt-3">
+              <div className="text-xl sm:text-2xl font-semibold text-zinc-900 font-serif-brand">
                 {pendingDeliveries.length}
               </div>
               <p className="text-[11px] text-zinc-400 mt-0.5">álbuns, vídeos e fotos</p>
             </div>
             <Link
               href="/entregas"
-              className="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between text-[11px] font-medium text-[#C5A880] hover:text-[#9A7A4A]"
+              className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-zinc-100 flex items-center justify-between text-[11px] font-medium text-[#C5A880] hover:text-[#9A7A4A]"
             >
               <span>Acompanhar prazos</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -294,7 +294,7 @@ function DashboardContent() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Próximos Eventos (2 Columns) */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
               <div>
                 <h2 className="text-base font-semibold text-zinc-900 tracking-tight">
                   Próximos Eventos
@@ -305,7 +305,7 @@ function DashboardContent() {
               </div>
 
               {/* View Switcher: Lista / Semana / Mês */}
-              <div className="flex items-center p-1 rounded-xl bg-white border border-zinc-200 text-xs">
+              <div className="flex items-center p-1 rounded-xl bg-white border border-zinc-200 text-xs self-start sm:self-auto">
                 <button
                   onClick={() => setAgendaView('lista')}
                   className={`px-3 py-1 rounded-lg font-medium transition-colors ${

@@ -107,77 +107,79 @@ export default function EventsPage() {
         </div>
 
         {/* Controls: Search, Status Filter & View Toggle */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-[#EAEAE4] shadow-xs">
-          <div className="relative w-full md:w-80">
-            <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Buscar por evento, casal, local ou tipo..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-zinc-50 border border-zinc-200 focus:outline-hidden focus:border-[#C5A880]"
-            />
+        <div className="flex flex-col gap-3 bg-white p-3 rounded-2xl border border-[#EAEAE4] shadow-xs">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="relative w-full md:w-80">
+              <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Buscar por evento, casal, local ou tipo..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-zinc-50 border border-zinc-200 focus:outline-hidden focus:border-[#C5A880]"
+              />
+            </div>
+
+            <div className="flex items-center justify-between md:justify-end gap-2 w-full md:w-auto text-xs">
+              {/* Sort Order */}
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-zinc-100 border border-zinc-200 text-xs text-zinc-600 flex-1 sm:flex-none min-w-0">
+                <ArrowUpDown className="w-3.5 h-3.5 text-[#C5A880] shrink-0" />
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value as 'proximos' | 'recentes' | 'antigos')}
+                  className="bg-transparent font-medium text-zinc-800 focus:outline-hidden cursor-pointer w-full sm:w-auto truncate"
+                >
+                  <option value="proximos">Mais Próximos Primeiro</option>
+                  <option value="recentes">Data Mais Recente</option>
+                  <option value="antigos">Data Mais Antiga</option>
+                </select>
+              </div>
+
+              {/* View Mode Toggle */}
+              <div className="flex items-center p-1 rounded-xl bg-zinc-100 border border-zinc-200 shrink-0">
+                <button
+                  onClick={() => setViewMode('lista')}
+                  className={`p-1.5 rounded-lg transition-colors ${
+                    viewMode === 'lista' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-500'
+                  }`}
+                  title="Visualização em Lista"
+                >
+                  <List className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode('calendario')}
+                  className={`p-1.5 rounded-lg transition-colors ${
+                    viewMode === 'calendario' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-500'
+                  }`}
+                  title="Visualização em Calendário"
+                >
+                  <CalendarDays className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end overflow-x-auto text-xs">
-            {/* Filter buttons */}
-            <div className="flex items-center gap-1.5">
-              {[
-                { id: 'todos', label: 'Todos' },
-                { id: 'proximos', label: 'Próximos' },
-                { id: 'em_andamento', label: 'Em Andamento' },
-                { id: 'concluidos', label: 'Concluídos' },
-                { id: 'cancelados', label: 'Cancelados' },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setFilterStatus(tab.id)}
-                  className={`px-3 py-1.5 rounded-xl font-medium transition-colors ${
-                    filterStatus === tab.id
-                      ? 'bg-zinc-900 text-white'
-                      : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Sort Order */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-zinc-100 border border-zinc-200 text-xs text-zinc-600 shrink-0">
-              <ArrowUpDown className="w-3.5 h-3.5 text-[#C5A880]" />
-              <select
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value as 'proximos' | 'recentes' | 'antigos')}
-                className="bg-transparent font-medium text-zinc-800 focus:outline-hidden cursor-pointer"
-              >
-                <option value="proximos">Mais Próximos Primeiro</option>
-                <option value="recentes">Data Mais Recente</option>
-                <option value="antigos">Data Mais Antiga</option>
-              </select>
-            </div>
-
-            {/* View Mode Toggle */}
-            <div className="flex items-center p-1 rounded-xl bg-zinc-100 border border-zinc-200 shrink-0">
+          {/* Filter buttons */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs">
+            {[
+              { id: 'todos', label: 'Todos' },
+              { id: 'proximos', label: 'Próximos' },
+              { id: 'em_andamento', label: 'Em Andamento' },
+              { id: 'concluidos', label: 'Concluídos' },
+              { id: 'cancelados', label: 'Cancelados' },
+            ].map((tab) => (
               <button
-                onClick={() => setViewMode('lista')}
-                className={`p-1.5 rounded-lg transition-colors ${
-                  viewMode === 'lista' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-500'
+                key={tab.id}
+                onClick={() => setFilterStatus(tab.id)}
+                className={`px-3 py-1.5 rounded-xl font-medium whitespace-nowrap shrink-0 transition-colors ${
+                  filterStatus === tab.id
+                    ? 'bg-zinc-900 text-white'
+                    : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
                 }`}
-                title="Visualização em Lista"
               >
-                <List className="w-4 h-4" />
+                {tab.label}
               </button>
-              <button
-                onClick={() => setViewMode('calendario')}
-                className={`p-1.5 rounded-lg transition-colors ${
-                  viewMode === 'calendario' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-500'
-                }`}
-                title="Visualização em Calendário"
-              >
-                <CalendarDays className="w-4 h-4" />
-              </button>
-            </div>
+            ))}
           </div>
         </div>
 

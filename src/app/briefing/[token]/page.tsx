@@ -285,7 +285,7 @@ function BriefingContent() {
         ) : (
           <div className="bg-white rounded-3xl border border-[#EAEAE4] shadow-sm overflow-hidden">
             {/* Progress Bar & Step Counter */}
-            <div className="p-6 border-b border-zinc-100 bg-[#FAF7F2]/60 space-y-3">
+            <div className="p-4 sm:p-6 border-b border-zinc-100 bg-[#FAF7F2]/60 space-y-3">
               <div className="flex items-center justify-between text-xs font-semibold text-zinc-800">
                 <span className="uppercase tracking-wider text-[11px] text-[#8B6E3F]">
                   ETAPA {safeStep} DE {totalSteps}
@@ -302,7 +302,7 @@ function BriefingContent() {
               </div>
 
               {/* Etapas ativas para este pacote/evento */}
-              <div className="flex flex-wrap gap-1.5 pt-1">
+              <div className="flex sm:flex-wrap gap-1.5 pt-1 overflow-x-auto no-scrollbar">
                 {ctx.steps.map((st, idx) => {
                   const stepNum = idx + 1;
                   const isCurrent = stepNum === safeStep;
@@ -312,7 +312,7 @@ function BriefingContent() {
                       key={st.id}
                       type="button"
                       onClick={() => saveProgress(stepNum)}
-                      className={`px-2 py-1 rounded-lg text-[10px] font-medium transition-colors cursor-pointer ${
+                      className={`px-2.5 py-1 rounded-lg text-[11px] sm:text-[10px] font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
                         isCurrent
                           ? 'bg-zinc-900 text-white'
                           : isDone
@@ -328,7 +328,7 @@ function BriefingContent() {
             </div>
 
             {/* Form Steps */}
-            <div className="p-6 sm:p-8 space-y-6">
+            <div className="p-4 sm:p-8 space-y-6">
               {/* ETAPA: INFORMAÇÕES DO EVENTO */}
               {currentStepDef.id === 'event_info' && (
                 <div className="space-y-5 animate-in fade-in duration-200">

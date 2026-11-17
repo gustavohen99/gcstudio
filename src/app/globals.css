@@ -13,6 +13,31 @@
     --muted: #73736C;
     --border: #EAEAE4;
   }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    overflow-x: clip;
+    touch-action: manipulation;
+  }
+
+  /* Evita zoom automático do iOS Safari ao focar campos em telas pequenas */
+  @media (max-width: 639px) {
+    input:not([type='checkbox']):not([type='radio']),
+    textarea {
+      font-size: 16px;
+    }
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .font-serif-brand {

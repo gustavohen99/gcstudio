@@ -41,6 +41,7 @@ export default function CRMPage() {
   const { leads, updateLead, convertLeadToClient, deleteLead } = useAppStore();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+  const [mobileStageFilter, setMobileStageFilter] = useState<LeadStatus | 'TODAS'>('TODAS');
 
   // Drag and drop state
   const [draggedLeadId, setDraggedLeadId] = useState<string | null>(null);
@@ -89,19 +90,63 @@ export default function CRMPage() {
           </button>
         </div>
 
-        {/* Kanban Board (Horizontal Scrolling on small screens) */}
-        <div className="flex gap-4 overflow-x-auto pb-6 pt-1 select-none min-h-[640px]">
+        {/* Mobile Stage Filter Pills (facilita navegação em telas pequenas sem arrastar) */}
+        <div className="md:hidden flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-xs">
+          <button
+            type="button"
+            onClick={() => setMobileStageFilter('TODAS')}
+            className={`px-3 py-1.5 rounded-xl font-medium whitespace-nowrap shrink-0 transition-colors ${
+              mobileStageFilter === 'TODAS'
+                ? 'bg-zinc-900 text-white'
+                : 'bg-white border border-zinc-200 text-zinc-600'
+            }`}
+          >
+            Todas ({leads.length})
+          </button>
+          {COLUMNS.map((colStatus) => {
+            const count = leads.filter((l) => l.status === colStatus).length;
+            return (
+              <button
+                key={colStatus}
+                type="button"
+                onClick={() => setMobileStageFilter(colStatus)}
+                className={`px-3 py-1.5 rounded-xl font-medium whitespace-nowrap shrink-0 transition-colors ${
+                  mobileStageFilter === colStatus
+                    ? 'bg-zinc-900 text-white'
+                    : 'bg-white border border-zinc-200 text-zinc-600'
+                }`}
+              >
+                {colStatus} ({count})
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Kanban Board (Horizontal Snap Scrolling on mobile when "Todas", or full-width single stage) */}
+        <div
+          className={`flex gap-4 overflow-x-auto no-scrollbar pb-6 pt-1 select-none min-h-[520px] md:min-h-[640px] ${
+            mobileStageFilter === 'TODAS' ? 'snap-x snap-mandatory md:snap-none' : ''
+          }`}
+        >
           {COLUMNS.map((colStatus) => {
             const colLeads = leads.filter((l) => l.status === colStatus);
             const totalValue = colLeads.reduce((acc, l) => acc + (l.estimated_value || 0), 0);
             const cfg = getLeadStatusConfig(colStatus);
+            const hiddenOnMobile =
+              mobileStageFilter !== 'TODAS' && mobileStageFilter !== colStatus;
 
             return (
               <div
                 key={colStatus}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={() => handleDrop(colStatus)}
-                className="w-72 sm:w-80 shrink-0 bg-[#F5F5F1]/80 rounded-2xl p-3 border border-[#EAEAE4] flex flex-col"
+                className={`${
+                  hiddenOnMobile ? 'hidden md:flex' : 'flex'
+                } ${
+                  mobileStageFilter === 'TODAS'
+                    ? 'w-[84vw] sm:w-80 shrink-0 snap-center'
+                    : 'w-full md:w-80 md:shrink-0'
+                } bg-[#F5F5F1]/80 rounded-2xl p-3 border border-[#EAEAE4] flex-col`}
               >
                 {/* Column Header */}
                 <div className="px-2 py-2 mb-2 flex items-center justify-between">

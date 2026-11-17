@@ -136,37 +136,37 @@ export default function FinancePage() {
         </div>
 
         {/* 4 Financial Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs">
-            <span className="text-xs text-zinc-500">Receita Recebida</span>
-            <div className="text-2xl font-bold text-emerald-600 mt-1 font-serif-brand">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="p-3.5 sm:p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs">
+            <span className="text-[11px] sm:text-xs text-zinc-500">Receita Recebida</span>
+            <div className="text-lg sm:text-2xl font-bold text-emerald-600 mt-1 font-serif-brand truncate">
               {formatCurrency(metrics.received)}
             </div>
             <p className="text-[11px] text-zinc-400 mt-1">total já liquidado</p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs">
-            <span className="text-xs text-zinc-500">Receita Prevista (Total)</span>
-            <div className="text-2xl font-bold text-zinc-900 mt-1 font-serif-brand">
+          <div className="p-3.5 sm:p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs">
+            <span className="text-[11px] sm:text-xs text-zinc-500">Receita Prevista</span>
+            <div className="text-lg sm:text-2xl font-bold text-zinc-900 mt-1 font-serif-brand truncate">
               {formatCurrency(metrics.totalForecast)}
             </div>
-            <p className="text-[11px] text-zinc-400 mt-1">contratos confirmados</p>
+            <p className="text-[11px] text-zinc-400 mt-1">eventos confirmados</p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs">
-            <span className="text-xs text-zinc-500">Total a Receber</span>
-            <div className="text-2xl font-bold text-[#8B6E3F] mt-1 font-serif-brand">
+          <div className="p-3.5 sm:p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs">
+            <span className="text-[11px] sm:text-xs text-zinc-500">Total a Receber</span>
+            <div className="text-lg sm:text-2xl font-bold text-[#8B6E3F] mt-1 font-serif-brand truncate">
               {formatCurrency(metrics.pending)}
             </div>
-            <p className="text-[11px] text-zinc-400 mt-1">parcelas futuras abertas</p>
+            <p className="text-[11px] text-zinc-400 mt-1">parcelas abertas</p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs">
-            <span className="text-xs text-zinc-500">Total em Atraso</span>
-            <div className="text-2xl font-bold text-rose-600 mt-1 font-serif-brand">
+          <div className="p-3.5 sm:p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs">
+            <span className="text-[11px] sm:text-xs text-zinc-500">Total em Atraso</span>
+            <div className="text-lg sm:text-2xl font-bold text-rose-600 mt-1 font-serif-brand truncate">
               {formatCurrency(metrics.overdue)}
             </div>
-            <p className="text-[11px] text-zinc-400 mt-1">requer contato com cliente</p>
+            <p className="text-[11px] text-zinc-400 mt-1">requer contato</p>
           </div>
         </div>
 
@@ -183,12 +183,12 @@ export default function FinancePage() {
             />
           </div>
 
-          <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto text-xs">
+          <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto no-scrollbar text-xs">
             {(['todos', 'pendente', 'pago', 'atrasado', 'cancelado'] as const).map((st) => (
               <button
                 key={st}
                 onClick={() => setStatusFilter(st)}
-                className={`px-3 py-1.5 rounded-xl font-medium capitalize transition-colors ${
+                className={`px-3 py-1.5 rounded-xl font-medium capitalize whitespace-nowrap shrink-0 transition-colors ${
                   statusFilter === st
                     ? 'bg-zinc-900 text-white'
                     : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'

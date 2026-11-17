@@ -97,12 +97,12 @@ export default function QuotesPage() {
             />
           </div>
 
-          <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto text-xs">
+          <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto no-scrollbar text-xs">
             {(['todos', 'enviado', 'aceito', 'rascunho'] as const).map((st) => (
               <button
                 key={st}
                 onClick={() => setStatusFilter(st)}
-                className={`px-3 py-1.5 rounded-xl font-medium capitalize transition-colors ${
+                className={`px-3 py-1.5 rounded-xl font-medium capitalize whitespace-nowrap shrink-0 transition-colors ${
                   statusFilter === st
                     ? 'bg-zinc-900 text-white'
                     : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'

@@ -380,10 +380,10 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
       maxWidth="2xl"
     >
       {/* Tab Selector */}
-      <div className="flex border-b border-zinc-200 pb-3 gap-2 overflow-x-auto text-xs">
+      <div className="flex border-b border-zinc-200 pb-3 gap-1.5 overflow-x-auto no-scrollbar text-xs">
         <button
           onClick={() => setActiveTab('client')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium whitespace-nowrap shrink-0 transition-colors ${
             activeTab === 'client'
               ? 'bg-zinc-900 text-white'
               : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
@@ -393,7 +393,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
         </button>
         <button
           onClick={() => setActiveTab('lead')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium whitespace-nowrap shrink-0 transition-colors ${
             activeTab === 'lead'
               ? 'bg-zinc-900 text-white'
               : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
@@ -403,7 +403,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
         </button>
         <button
           onClick={() => setActiveTab('event')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium whitespace-nowrap shrink-0 transition-colors ${
             activeTab === 'event'
               ? 'bg-zinc-900 text-white'
               : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
@@ -413,7 +413,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
         </button>
         <button
           onClick={() => setActiveTab('quote')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium whitespace-nowrap shrink-0 transition-colors ${
             activeTab === 'quote'
               ? 'bg-zinc-900 text-white'
               : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
@@ -423,7 +423,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
         </button>
         <button
           onClick={() => setActiveTab('gallery')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium whitespace-nowrap shrink-0 transition-colors ${
             activeTab === 'gallery'
               ? 'bg-zinc-900 text-white'
               : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
@@ -433,7 +433,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
         </button>
         <button
           onClick={() => setActiveTab('delivery')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium whitespace-nowrap shrink-0 transition-colors ${
             activeTab === 'delivery'
               ? 'bg-zinc-900 text-white'
               : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'

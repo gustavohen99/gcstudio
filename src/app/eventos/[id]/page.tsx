@@ -356,7 +356,7 @@ function EventDetailContent() {
         </div>
 
         {/* Master Event Header */}
-        <div className="p-6 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="p-4 sm:p-6 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
           <div className="space-y-2.5">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700">
@@ -454,7 +454,7 @@ function EventDetailContent() {
         </div>
 
         {/* Abas do Evento */}
-        <div className="border-b border-zinc-200 flex gap-1 sm:gap-2 overflow-x-auto text-xs font-medium">
+        <div className="border-b border-zinc-200 flex gap-1 sm:gap-2 overflow-x-auto no-scrollbar text-xs font-medium -mx-1 px-1">
           {[
             { id: 'resumo', label: 'Resumo', icon: Sparkles },
             { id: 'briefing', label: 'Briefing', icon: ClipboardList },
@@ -1125,7 +1125,7 @@ function EventDetailContent() {
 
                       <button
                         onClick={() => deleteTimelineMoment(item.id)}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 transition-opacity"
+                        className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 transition-opacity shrink-0"
                         title="Excluir momento"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -1149,7 +1149,7 @@ function EventDetailContent() {
                 </div>
 
                 {/* Phase tabs */}
-                <div className="flex items-center gap-1.5 text-xs">
+                <div className="flex items-center gap-1.5 text-xs overflow-x-auto no-scrollbar pb-0.5">
                   {[
                     { id: 'todos', label: 'Todos' },
                     { id: 'antes', label: 'Antes do Evento' },
@@ -1159,7 +1159,7 @@ function EventDetailContent() {
                     <button
                       key={phase.id}
                       onClick={() => setChecklistPhase(phase.id as typeof checklistPhase)}
-                      className={`px-3 py-1 rounded-xl font-medium transition-colors ${
+                      className={`px-3 py-1.5 rounded-xl font-medium whitespace-nowrap shrink-0 transition-colors ${
                         checklistPhase === phase.id
                           ? 'bg-zinc-900 text-white'
                           : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
@@ -1174,7 +1174,7 @@ function EventDetailContent() {
               {/* Add Custom Task Input */}
               <form
                 onSubmit={handleAddChecklistTask}
-                className="p-3 bg-white rounded-2xl border border-zinc-200 flex items-center gap-2 text-xs"
+                className="p-3 bg-white rounded-2xl border border-zinc-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 text-xs"
               >
                 <select
                   value={newChecklistPhase}
@@ -1241,7 +1241,7 @@ function EventDetailContent() {
                               e.stopPropagation();
                               deleteChecklistTask(task.id);
                             }}
-                            className="opacity-0 group-hover:opacity-100 p-1 text-zinc-400 hover:text-rose-600 transition-opacity"
+                            className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-1 text-zinc-400 hover:text-rose-600 transition-opacity"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -1256,22 +1256,22 @@ function EventDetailContent() {
           {/* 5. FINANCEIRO (Item 13) */}
           {activeTab === 'financeiro' && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                <div className="p-4 rounded-2xl bg-white border border-[#EAEAE4]">
-                  <span className="text-xs text-zinc-400">Valor Total do Evento</span>
-                  <p className="text-lg font-bold text-zinc-900 mt-0.5 font-serif-brand">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-[#EAEAE4]">
+                  <span className="text-[11px] sm:text-xs text-zinc-400">Valor Total</span>
+                  <p className="text-base sm:text-lg font-bold text-zinc-900 mt-0.5 font-serif-brand">
                     {formatCurrency(event.value)}
                   </p>
                 </div>
-                <div className="p-4 rounded-2xl bg-white border border-[#EAEAE4]">
-                  <span className="text-xs text-zinc-400">Valor de Entrada Configurado</span>
-                  <p className="text-lg font-bold text-zinc-900 mt-0.5 font-serif-brand">
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-[#EAEAE4]">
+                  <span className="text-[11px] sm:text-xs text-zinc-400">Valor de Entrada</span>
+                  <p className="text-base sm:text-lg font-bold text-zinc-900 mt-0.5 font-serif-brand">
                     {formatCurrency(event.deposit_value || 0)}
                   </p>
                 </div>
-                <div className="p-4 rounded-2xl bg-white border border-[#EAEAE4]">
-                  <span className="text-xs text-zinc-400">Total Recebido</span>
-                  <p className="text-lg font-bold text-emerald-600 mt-0.5 font-serif-brand">
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-[#EAEAE4]">
+                  <span className="text-[11px] sm:text-xs text-zinc-400">Total Recebido</span>
+                  <p className="text-base sm:text-lg font-bold text-emerald-600 mt-0.5 font-serif-brand">
                     {formatCurrency(
                       eventPayments
                         .filter((p) => p.status === 'pago')
@@ -1279,9 +1279,9 @@ function EventDetailContent() {
                     )}
                   </p>
                 </div>
-                <div className="p-4 rounded-2xl bg-white border border-[#EAEAE4]">
-                  <span className="text-xs text-zinc-400">Saldo a Receber</span>
-                  <p className="text-lg font-bold text-[#8B6E3F] mt-0.5 font-serif-brand">
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-[#EAEAE4]">
+                  <span className="text-[11px] sm:text-xs text-zinc-400">Saldo a Receber</span>
+                  <p className="text-base sm:text-lg font-bold text-[#8B6E3F] mt-0.5 font-serif-brand">
                     {formatCurrency(
                       eventPayments
                         .filter((p) => p.status !== 'pago')
@@ -1292,12 +1292,12 @@ function EventDetailContent() {
               </div>
 
               {/* Installments table */}
-              <div className="p-5 bg-white rounded-2xl border border-[#EAEAE4] space-y-3">
-                <div className="flex items-center justify-between">
+              <div className="p-4 sm:p-5 bg-white rounded-2xl border border-[#EAEAE4] space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <h4 className="text-xs font-semibold text-zinc-900">Parcelas e Recebimentos</h4>
                   <button
                     onClick={openConfigModal}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium cursor-pointer"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium cursor-pointer self-start sm:self-auto"
                   >
                     <Settings className="w-3.5 h-3.5 text-[#C5A880]" />
                     <span>Configurar Valor e Entrada</span>
@@ -1312,7 +1312,7 @@ function EventDetailContent() {
                       return (
                         <div
                           key={p.id}
-                          className="p-3 rounded-xl border border-zinc-200 flex items-center justify-between text-xs"
+                          className="p-3 rounded-xl border border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs"
                         >
                           <div>
                             <span className="font-semibold text-zinc-900">{p.description}</span>
@@ -1320,13 +1320,14 @@ function EventDetailContent() {
                               Vencimento: {formatDate(p.due_date)} • {p.payment_method || 'PIX'}
                             </p>
                           </div>
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-between sm:justify-end gap-2.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-100">
                             <span className="font-bold text-zinc-900">{formatCurrency(p.amount)}</span>
-                            <span
-                              className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${pCfg.bg} ${pCfg.color}`}
-                            >
-                              {pCfg.label}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${pCfg.bg} ${pCfg.color}`}
+                              >
+                                {pCfg.label}
+                              </span>
                             {p.status !== 'pago' && (
                               <button
                                 onClick={() => {
@@ -1341,6 +1342,7 @@ function EventDetailContent() {
                                 <Check className="w-3 h-3" /> Baixar
                               </button>
                             )}
+                            </div>
                           </div>
                         </div>
                       );
