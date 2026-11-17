@@ -20,7 +20,6 @@ import {
   MapPin,
   ArrowRight,
   AlertTriangle,
-  FileText,
   DollarSign,
   ClipboardList,
   Image as ImageIcon,
@@ -38,7 +37,6 @@ function DashboardContent() {
     events,
     payments,
     deliveries,
-    contracts,
     briefings,
     galleries,
     packages,
@@ -104,24 +102,10 @@ function DashboardContent() {
       id: string;
       title: string;
       desc: string;
-      type: 'contrato' | 'pagamento' | 'briefing' | 'galeria' | 'entrega';
+      type: 'pagamento' | 'briefing' | 'galeria' | 'entrega';
       link: string;
       badge: string;
     }[] = [];
-
-    // Contratos aguardando assinatura
-    contracts
-      .filter((c) => c.status === 'enviado' || c.status === 'rascunho')
-      .forEach((c) => {
-        list.push({
-          id: 'c-' + c.id,
-          title: `Contrato: ${c.client_name}`,
-          desc: `${c.template_title} aguarda assinatura do cliente`,
-          type: 'contrato',
-          link: '/contratos',
-          badge: 'Aguardando assinatura',
-        });
-      });
 
     // Pagamentos atrasados
     payments
@@ -172,7 +156,7 @@ function DashboardContent() {
     });
 
     return list;
-  }, [contracts, payments, briefings, events, galleries, packages]);
+  }, [payments, briefings, events, galleries, packages]);
 
   return (
     <AppShell>
@@ -487,9 +471,6 @@ function DashboardContent() {
                     className="py-3 first:pt-0 last:pb-0 flex items-start gap-3 hover:bg-zinc-50/80 -mx-2 px-2 rounded-xl transition-colors group"
                   >
                     <div className="mt-0.5">
-                      {item.type === 'contrato' && (
-                        <FileText className="w-4 h-4 text-indigo-500" />
-                      )}
                       {item.type === 'pagamento' && (
                         <DollarSign className="w-4 h-4 text-rose-500" />
                       )}

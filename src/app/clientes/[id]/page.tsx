@@ -25,7 +25,6 @@ import {
   Edit3,
   Calendar,
   FileSpreadsheet,
-  FileText,
   DollarSign,
   Image as ImageIcon,
   FolderOpen,
@@ -48,7 +47,6 @@ function ClientProfileContent() {
     events,
     packages,
     quotes,
-    contracts,
     payments,
     galleries,
     updateClient,
@@ -58,7 +56,7 @@ function ClientProfileContent() {
 
   const client = clients.find((c) => c.id === clientId);
   const [activeTab, setActiveTab] = useState<
-    'visao_geral' | 'eventos' | 'orcamentos' | 'contratos' | 'financeiro' | 'galerias' | 'documentos' | 'historico'
+    'visao_geral' | 'eventos' | 'orcamentos' | 'financeiro' | 'galerias' | 'documentos' | 'historico'
   >('visao_geral');
 
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -93,7 +91,6 @@ function ClientProfileContent() {
 
   const clientEvents = sortEventsByProximity(events.filter((e) => e.client_id === client.id), today);
   const clientQuotes = quotes.filter((q) => q.client_id === client.id);
-  const clientContracts = contracts.filter((c) => c.client_id === client.id);
   const clientPayments = payments.filter((p) => p.client_id === client.id);
   const clientGalleries = galleries.filter((g) => g.client_id === client.id);
 
@@ -224,13 +221,12 @@ function ClientProfileContent() {
           </div>
         </div>
 
-        {/* 8 Abas do Cliente */}
+        {/* 7 Abas do Cliente */}
         <div className="border-b border-zinc-200 flex gap-2 overflow-x-auto text-xs font-medium">
           {[
             { id: 'visao_geral', label: 'Visão Geral', icon: Users },
             { id: 'eventos', label: `Eventos (${clientEvents.length})`, icon: Calendar },
             { id: 'orcamentos', label: `Orçamentos (${clientQuotes.length})`, icon: FileSpreadsheet },
-            { id: 'contratos', label: `Contratos (${clientContracts.length})`, icon: FileText },
             { id: 'financeiro', label: `Financeiro (${clientPayments.length})`, icon: DollarSign },
             { id: 'galerias', label: `Galerias (${clientGalleries.length})`, icon: ImageIcon },
             { id: 'documentos', label: 'Documentos', icon: FolderOpen },
@@ -453,35 +449,7 @@ function ClientProfileContent() {
             </div>
           )}
 
-          {/* 4. CONTRATOS */}
-          {activeTab === 'contratos' && (
-            <div className="space-y-3">
-              {clientContracts.length === 0 ? (
-                <div className="p-8 text-center bg-white rounded-2xl border border-[#EAEAE4] text-xs text-zinc-400">
-                  Nenhum contrato registrado para este cliente.
-                </div>
-              ) : (
-                clientContracts.map((c) => (
-                  <div
-                    key={c.id}
-                    className="p-5 bg-white rounded-2xl border border-[#EAEAE4] flex items-center justify-between"
-                  >
-                    <div>
-                      <h4 className="text-sm font-semibold text-zinc-900">{c.template_title}</h4>
-                      <p className="text-xs text-zinc-500 mt-1">
-                        Status: <span className="capitalize">{c.status}</span>
-                      </p>
-                    </div>
-                    <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md">
-                      {c.status}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-
-          {/* 5. FINANCEIRO */}
+          {/* 4. FINANCEIRO */}
           {activeTab === 'financeiro' && (
             <div className="space-y-3">
               {clientPayments.length === 0 ? (
