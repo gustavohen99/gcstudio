@@ -49,7 +49,11 @@ import {
 } from './mock-data';
 import { isSupabaseConfigured, supabase } from './supabase';
 import { resolveEventPackage } from './utils';
-import { buildBriefingContext } from './briefing-config';
+import {
+  buildDefaultChecklistForEvent,
+  buildDefaultTimelineForEvent,
+  buildInitialBriefingForEvent,
+} from './event-automation';
 
 const STORAGE_KEY = 'gcstudio_v1_store';
 
@@ -533,112 +537,17 @@ export const useAppStore = () => {
         });
       }
 
-      // Automação: Criar checklist padrão para o evento
-      const defaultChecklist: ChecklistTask[] = [
-        { id: 'chk-' + Date.now() + '-1', event_id: eventId, phase: 'antes', title: 'Confirmar briefing com os clientes', is_completed: false },
-        { id: 'chk-' + Date.now() + '-2', event_id: eventId, phase: 'antes', title: 'Conferir cronograma e horários com cerimonial', is_completed: false },
-        { id: 'chk-' + Date.now() + '-3', event_id: eventId, phase: 'antes', title: 'Carregar baterias e formatar cartões de memória', is_completed: false },
-        { id: 'chk-' + Date.now() + '-4', event_id: eventId, phase: 'antes', title: 'Limpar lentes e conferir equipamentos reservas', is_completed: false },
-        { id: 'chk-' + Date.now() + '-5', event_id: eventId, phase: 'durante', title: 'Chegada da equipe no making of', is_completed: false },
-        { id: 'chk-' + Date.now() + '-6', event_id: eventId, phase: 'durante', title: 'Registro de cerimônia e fotos obrigatórias', is_completed: false },
-        { id: 'chk-' + Date.now() + '-7', event_id: eventId, phase: 'durante', title: 'Backup inicial de segurança das mídias', is_completed: false },
-        { id: 'chk-' + Date.now() + '-8', event_id: eventId, phase: 'pos', title: 'Curadoria e seleção das fotos', is_completed: false },
-        { id: 'chk-' + Date.now() + '-9', event_id: eventId, phase: 'pos', title: 'Edição de cor editorial e tratamento', is_completed: false },
-        { id: 'chk-' + Date.now() + '-10', event_id: eventId, phase: 'pos', title: 'Publicar galeria online e entregar aos clientes', is_completed: false },
-      ];
-
-      // Automação: Criar estrutura de briefing adaptada ao tipo de evento e pacote
-      const briefingCtx = buildBriefingContext(newEvent, globalState.packages);
-      const defaultBriefing: BriefingData = {
-        id: 'brf-' + Date.now(),
-        event_id: eventId,
-        client_id: event.client_id,
-        token: 'brf-' + Math.random().toString(36).substring(2, 10),
-        status: 'nao_enviado',
-        current_step: 1,
-        event_info: {
-          date: event.date,
-          ceremony_time: event.time,
-          reception_time: event.time || '19:00',
-          ceremony_location: event.location,
-          reception_location: event.location,
-          making_of_address: '',
-          team_arrival_time: '13:00',
-          expected_end_time: '02:00',
-        },
-        ceremony_info: {
-          type:
-            newEvent.type === '15 anos'
-              ? 'Cerimonial de 15 Anos'
-              : newEvent.type === 'Formatura'
-                ? 'Colação / Baile'
-                : briefingCtx.hasCeremony
-                  ? 'Cerimônia'
-                  : '',
-          celebrant: '',
-          parents_entrance: briefingCtx.hasCeremony,
-          godparents_entrance: briefingCtx.profile === 'casamento',
-          pages_flower_girls: briefingCtx.profile === 'casamento',
-          special_entrances: '',
-          notes: '',
-        },
-        people: [],
-        required_photos: briefingCtx.defaultRequiredPhotos.map((rp, idx) => ({
-          id: `rp-${Date.now()}-${idx}`,
-          description: rp.description,
-          people_involved: rp.people_involved,
-        })),
-        special_moments: {
-          has_surprise: false,
-          surprise_details: '',
-          has_tribute: false,
-          tribute_details: '',
-          has_speech: false,
-          speech_details: '',
-          has_special_dance: false,
-          special_dance_details: '',
-          attention_moments: '',
-        },
-        party_info: {
-          attractions: '',
-          retrospective: false,
-          games: '',
-          surprise: '',
-          no_photo_moments: '',
-        },
-        preferences: {
-          photography_favorites: '',
-          style: 'misto',
-          references: '',
-          dislikes: '',
-          notes: '',
-        },
-        video_info: {
-          important_music: '',
-          essential_speeches: '',
-          talking_people: '',
-          essential_film_moments: '',
-          record_testimonials: true,
-        },
-        session_info: {
-          has_outfit_changes: false,
-          outfit_changes_details: '',
-          body_insecurities: '',
-          preferred_poses: '',
-          avoid_poses: '',
-          props_or_elements: '',
-          session_vibe: '',
-          notes: '',
-        },
-        created_at: nowIso,
-        updated_at: nowIso,
-      };
+      // Automação: Gerar checklist, cronograma e briefing conforme o tipo de evento e pacote
+      const defaultChecklist = buildDefaultChecklistForEvent(newEvent, globalState.packages);
+      const defaultTimeline = buildDefaultTimelineForEvent(newEvent, globalState.packages);
+      const defaultBriefing = buildInitialBriefingForEvent(newEvent, globalState.packages);
 
       globalState = {
         ...globalState,
         events: [newEvent, ...globalState.events],
         payments: [...autoPayments, ...globalState.payments],
         checklists: [...globalState.checklists, ...defaultChecklist],
+        timelines: [...globalState.timelines, ...defaultTimeline],
         briefings: [...globalState.briefings, defaultBriefing],
       };
       notifyListeners();
@@ -931,14 +840,10 @@ export const useAppStore = () => {
       updated_at: nowIso,
     };
 
-    // Criar checklist padrão
-    const defaultChecklist: ChecklistTask[] = [
-      { id: 'chk-' + Date.now() + '-1', event_id: newEventId, phase: 'antes', title: 'Confirmar briefing com os clientes', is_completed: false },
-      { id: 'chk-' + Date.now() + '-2', event_id: newEventId, phase: 'antes', title: 'Conferir cronograma e horários', is_completed: false },
-      { id: 'chk-' + Date.now() + '-3', event_id: newEventId, phase: 'antes', title: 'Carregar baterias e formatar cartões', is_completed: false },
-      { id: 'chk-' + Date.now() + '-4', event_id: newEventId, phase: 'durante', title: 'Chegada da equipe no evento', is_completed: false },
-      { id: 'chk-' + Date.now() + '-5', event_id: newEventId, phase: 'pos', title: 'Curadoria e edição das fotos', is_completed: false },
-    ];
+    // Gerar checklist, cronograma e briefing personalizados pelo tipo de evento
+    const defaultChecklist = buildDefaultChecklistForEvent(newEvent, globalState.packages);
+    const defaultTimeline = buildDefaultTimelineForEvent(newEvent, globalState.packages);
+    const defaultBriefing = buildInitialBriefingForEvent(newEvent, globalState.packages);
 
     globalState = {
       ...globalState,
@@ -947,6 +852,8 @@ export const useAppStore = () => {
       payments: [...autoPayments, ...globalState.payments],
       leads: globalState.leads.map((l) => (l.id === leadId ? updatedLead : l)),
       checklists: [...globalState.checklists, ...defaultChecklist],
+      timelines: [...globalState.timelines, ...defaultTimeline],
+      briefings: [...globalState.briefings, defaultBriefing],
     };
 
     notifyListeners();
@@ -1127,6 +1034,44 @@ export const useAppStore = () => {
     };
     notifyListeners();
   }, []);
+
+  const regenerateEventAutomation = useCallback(
+    (eventId: string, target: 'checklist' | 'timeline' | 'both' = 'both') => {
+      const evt = globalState.events.find((e) => e.id === eventId);
+      if (!evt) return;
+
+      let nextChecklists = globalState.checklists;
+      let nextTimelines = globalState.timelines;
+
+      if (target === 'checklist' || target === 'both') {
+        const customTasks = globalState.checklists.filter(
+          (t) => t.event_id === eventId && t.is_custom
+        );
+        const generatedTasks = buildDefaultChecklistForEvent(evt, globalState.packages);
+        nextChecklists = [
+          ...globalState.checklists.filter((t) => t.event_id !== eventId),
+          ...generatedTasks,
+          ...customTasks,
+        ];
+      }
+
+      if (target === 'timeline' || target === 'both') {
+        const generatedTimeline = buildDefaultTimelineForEvent(evt, globalState.packages);
+        nextTimelines = [
+          ...globalState.timelines.filter((t) => t.event_id !== eventId),
+          ...generatedTimeline,
+        ];
+      }
+
+      globalState = {
+        ...globalState,
+        checklists: nextChecklists,
+        timelines: nextTimelines,
+      };
+      notifyListeners();
+    },
+    []
+  );
 
   // TIMELINE
   const addTimelineMoment = useCallback((moment: Omit<TimelineMoment, 'id'>) => {
@@ -1928,6 +1873,7 @@ export const useAppStore = () => {
     toggleChecklistTask,
     addChecklistTask,
     deleteChecklistTask,
+    regenerateEventAutomation,
     addTimelineMoment,
     updateTimelineMoment,
     deleteTimelineMoment,

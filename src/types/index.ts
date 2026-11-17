@@ -204,6 +204,7 @@ export interface BriefingRequiredPhoto {
   description: string;
   people_involved?: string;
   notes?: string;
+  is_done?: boolean;
 }
 
 export interface BriefingData {

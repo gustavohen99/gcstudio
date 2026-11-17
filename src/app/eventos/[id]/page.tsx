@@ -19,6 +19,7 @@ import {
   getSuggestedExtraSessions,
 } from '@/lib/utils';
 import { ExtraSessionsEditor } from '@/components/events/ExtraSessionsEditor';
+import { EventDayModeSheet } from '@/components/events/EventDayModeSheet';
 import { buildBriefingContext } from '@/lib/briefing-config';
 import {
   Calendar,
@@ -44,6 +45,7 @@ import {
   Package as PackageIcon,
   Camera,
   Video,
+  Wand2,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
@@ -69,8 +71,10 @@ function EventDetailContent() {
     toggleChecklistTask,
     addChecklistTask,
     deleteChecklistTask,
+    regenerateEventAutomation,
     addTimelineMoment,
     deleteTimelineMoment,
+    updateBriefing,
     addPayment,
     updatePayment,
   } = useAppStore();
@@ -124,6 +128,7 @@ function EventDetailContent() {
   // Timeline add modal
   const [timelineModalOpen, setTimelineModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [dayModeOpen, setDayModeOpen] = useState(false);
   const [timelineForm, setTimelineForm] = useState({
     time: '16:00',
     title: '',
@@ -332,6 +337,14 @@ function EventDetailContent() {
     router.push('/eventos');
   };
 
+  const handleToggleRequiredPhoto = (photoId: string) => {
+    if (!eventBriefing) return;
+    const updated = (eventBriefing.required_photos || []).map((rp) =>
+      rp.id === photoId ? { ...rp, is_done: !rp.is_done } : rp
+    );
+    updateBriefing(eventBriefing.id, { required_photos: updated });
+  };
+
   return (
     <AppShell>
       <div className="space-y-6 animate-in fade-in duration-200">
@@ -416,8 +429,17 @@ function EventDetailContent() {
               )}
             </div>
 
-            {/* Actions: Configurar Evento & Alterar Status */}
+            {/* Actions: Modo Dia do Evento, Configurar Evento & Alterar Status */}
             <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setDayModeOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FAF7F2] hover:bg-[#F2EAE0] text-[#8B6E3F] border border-[#C5A880]/60 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+              >
+                <Camera className="w-3.5 h-3.5 text-[#C5A880]" />
+                <span>Modo Dia do Evento</span>
+              </button>
+
               <button
                 onClick={openConfigModal}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium shadow-xs transition-colors cursor-pointer"
@@ -1078,25 +1100,49 @@ function EventDetailContent() {
           {/* 3. CRONOGRAMA (Item 18) */}
           {activeTab === 'cronograma' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="text-sm font-semibold text-zinc-900">Cronograma do Dia</h3>
                   <p className="text-xs text-zinc-500">
                     Sequência detalhada de horários e responsabilidades
                   </p>
                 </div>
-                <button
-                  onClick={() => setTimelineModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 text-white text-xs font-medium shadow-xs"
-                >
-                  <Plus className="w-3.5 h-3.5 text-[#C5A880]" />
-                  <span>+ Adicionar Momento</span>
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      regenerateEventAutomation(event.id, 'timeline');
+                      toast('Cronograma gerado automaticamente conforme o pacote e tipo do evento!', 'success');
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#C5A880]/60 bg-[#FAF7F2] hover:bg-[#F2EAE0] text-[#8B6E3F] text-xs font-medium cursor-pointer"
+                  >
+                    <Wand2 className="w-3.5 h-3.5" />
+                    <span>Gerar Roteiro do Pacote</span>
+                  </button>
+                  <button
+                    onClick={() => setTimelineModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 text-white text-xs font-medium shadow-xs cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-[#C5A880]" />
+                    <span>Novo Momento</span>
+                  </button>
+                </div>
               </div>
 
               {eventTimeline.length === 0 ? (
-                <div className="p-8 text-center bg-white rounded-2xl border border-[#EAEAE4] text-xs text-zinc-400">
-                  Nenhum momento cadastrado no cronograma.
+                <div className="p-8 text-center bg-white rounded-2xl border border-[#EAEAE4] text-xs text-zinc-400 space-y-3">
+                  <p>Nenhum momento cadastrado no cronograma.</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      regenerateEventAutomation(event.id, 'timeline');
+                      toast('Cronograma gerado automaticamente!', 'success');
+                    }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-zinc-900 text-white text-xs font-medium cursor-pointer"
+                  >
+                    <Wand2 className="w-3.5 h-3.5 text-[#C5A880]" />
+                    <span>Gerar Cronograma Automático</span>
+                  </button>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -1148,26 +1194,40 @@ function EventDetailContent() {
                   </p>
                 </div>
 
-                {/* Phase tabs */}
-                <div className="flex items-center gap-1.5 text-xs overflow-x-auto no-scrollbar pb-0.5">
-                  {[
-                    { id: 'todos', label: 'Todos' },
-                    { id: 'antes', label: 'Antes do Evento' },
-                    { id: 'durante', label: 'No Evento' },
-                    { id: 'pos', label: 'Pós-Evento' },
-                  ].map((phase) => (
-                    <button
-                      key={phase.id}
-                      onClick={() => setChecklistPhase(phase.id as typeof checklistPhase)}
-                      className={`px-3 py-1.5 rounded-xl font-medium whitespace-nowrap shrink-0 transition-colors ${
-                        checklistPhase === phase.id
-                          ? 'bg-zinc-900 text-white'
-                          : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
-                      }`}
-                    >
-                      {phase.label}
-                    </button>
-                  ))}
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      regenerateEventAutomation(event.id, 'checklist');
+                      toast('Checklist atualizado conforme o tipo de evento e pacote!', 'success');
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#C5A880]/60 bg-[#FAF7F2] hover:bg-[#F2EAE0] text-[#8B6E3F] text-xs font-medium cursor-pointer"
+                  >
+                    <Wand2 className="w-3.5 h-3.5" />
+                    <span>Gerar Checklist do Pacote</span>
+                  </button>
+
+                  {/* Phase tabs */}
+                  <div className="flex items-center gap-1.5 text-xs overflow-x-auto no-scrollbar pb-0.5">
+                    {[
+                      { id: 'todos', label: 'Todos' },
+                      { id: 'antes', label: 'Antes do Evento' },
+                      { id: 'durante', label: 'No Evento' },
+                      { id: 'pos', label: 'Pós-Evento' },
+                    ].map((phase) => (
+                      <button
+                        key={phase.id}
+                        onClick={() => setChecklistPhase(phase.id as typeof checklistPhase)}
+                        className={`px-3 py-1.5 rounded-xl font-medium whitespace-nowrap shrink-0 transition-colors ${
+                          checklistPhase === phase.id
+                            ? 'bg-zinc-900 text-white'
+                            : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                        }`}
+                      >
+                        {phase.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -1881,6 +1941,25 @@ function EventDetailContent() {
             </div>
           </div>
         </Modal>
+
+        {/* Modo Dia do Evento (Guia de Bolso em Campo) */}
+        <EventDayModeSheet
+          isOpen={dayModeOpen}
+          onClose={() => setDayModeOpen(false)}
+          event={event}
+          client={client}
+          packageInfo={currentPackageInfo}
+          briefingCtx={briefingCtx}
+          briefing={eventBriefing}
+          timeline={eventTimeline}
+          checklist={eventChecklist}
+          onToggleChecklistTask={toggleChecklistTask}
+          onToggleRequiredPhoto={handleToggleRequiredPhoto}
+          onCopyText={(text, label) => {
+            navigator.clipboard.writeText(text);
+            toast(label, 'success');
+          }}
+        />
       </div>
     </AppShell>
   );
