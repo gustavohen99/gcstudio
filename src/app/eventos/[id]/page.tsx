@@ -48,10 +48,11 @@ import {
   Camera,
   Video,
   Wand2,
+  RotateCcw,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
-import { EventStatus, EventType, EventAddon, EventExtraSession } from '@/types';
+import { EventStatus, EventType, EventAddon, EventExtraSession, Payment } from '@/types';
 
 function EventDetailContent() {
   const params = useParams();
@@ -79,6 +80,7 @@ function EventDetailContent() {
     updateBriefing,
     addPayment,
     updatePayment,
+    deletePayment,
   } = useAppStore();
 
   const event = events.find((e) => e.id === eventId);
@@ -131,6 +133,7 @@ function EventDetailContent() {
   const [timelineModalOpen, setTimelineModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [dayModeOpen, setDayModeOpen] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
   const [timelineForm, setTimelineForm] = useState({
     time: '16:00',
     title: '',
@@ -1398,7 +1401,7 @@ function EventDetailContent() {
                               >
                                 {pCfg.label}
                               </span>
-                            {p.status !== 'pago' && (
+                            {p.status !== 'pago' ? (
                               <button
                                 onClick={() => {
                                   updatePayment(p.id, {
@@ -1411,7 +1414,38 @@ function EventDetailContent() {
                               >
                                 <Check className="w-3 h-3" /> Baixar
                               </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const todayStr = new Date().toISOString().split('T')[0];
+                                  const nextStatus =
+                                    p.due_date && p.due_date < todayStr ? 'atrasado' : 'pendente';
+                                  updatePayment(p.id, {
+                                    status: nextStatus,
+                                    paid_at: undefined,
+                                  });
+                                  toast(
+                                    `Baixa desfeita! Parcela voltou para ${
+                                      nextStatus === 'atrasado' ? 'Atrasado' : 'Pendente'
+                                    }.`,
+                                    'info'
+                                  );
+                                }}
+                                className="px-2 py-1 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-100 text-zinc-700 text-[11px] font-medium flex items-center gap-1 cursor-pointer"
+                                title="Desfazer baixa do pagamento"
+                              >
+                                <RotateCcw className="w-3 h-3 text-zinc-500" /> Desfazer
+                              </button>
                             )}
+                            <button
+                              type="button"
+                              onClick={() => setPaymentToDelete(p)}
+                              className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                              title="Excluir parcela"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                             </div>
                           </div>
                         </div>
@@ -1961,6 +1995,46 @@ function EventDetailContent() {
               </button>
             </div>
           </div>
+        </Modal>
+
+        {/* Modal Confirmar Exclusão de Parcela */}
+        <Modal
+          isOpen={Boolean(paymentToDelete)}
+          onClose={() => setPaymentToDelete(null)}
+          title="Excluir Parcela"
+          subtitle="Esta ação não pode ser desfeita"
+          maxWidth="md"
+        >
+          {paymentToDelete && (
+            <div className="space-y-4 text-xs">
+              <p className="text-zinc-600 leading-relaxed">
+                Tem certeza que deseja excluir o lançamento{' '}
+                <strong className="text-zinc-900">{paymentToDelete.description}</strong> (
+                {formatCurrency(paymentToDelete.amount)}) deste evento?
+              </p>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setPaymentToDelete(null)}
+                  className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-700"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    deletePayment(paymentToDelete.id);
+                    setPaymentToDelete(null);
+                    toast('Parcela excluída com sucesso.', 'info');
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-medium cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Excluir Parcela</span>
+                </button>
+              </div>
+            </div>
+          )}
         </Modal>
 
         {/* Modo Dia do Evento (Guia de Bolso em Campo) */}

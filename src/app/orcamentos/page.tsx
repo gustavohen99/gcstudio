@@ -16,16 +16,20 @@ import {
   Sparkles,
   Search,
   Filter,
+  Trash2,
 } from 'lucide-react';
+import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { QuickCreateModal } from '@/components/global/QuickCreateModal';
+import { Quote } from '@/types';
 
 export default function QuotesPage() {
   const { toast } = useToast();
-  const { quotes, clients, packages } = useAppStore();
+  const { quotes, clients, packages, deleteQuote } = useAppStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'todos' | 'enviado' | 'aceito' | 'recusado' | 'rascunho'>('todos');
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+  const [quoteToDelete, setQuoteToDelete] = useState<Quote | null>(null);
 
   const filteredQuotes = quotes.filter((q) => {
     const matchSearch =
@@ -217,6 +221,14 @@ export default function QuotesPage() {
                     >
                       <Copy className="w-4 h-4" />
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setQuoteToDelete(quote)}
+                      className="p-2 rounded-xl text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                      title="Excluir orçamento"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
 
                   <Link
@@ -239,6 +251,46 @@ export default function QuotesPage() {
         onClose={() => setQuickCreateOpen(false)}
         defaultTab="quote"
       />
+
+      <Modal
+        isOpen={Boolean(quoteToDelete)}
+        onClose={() => setQuoteToDelete(null)}
+        title="Excluir Orçamento"
+        subtitle="Esta ação não pode ser desfeita"
+        maxWidth="md"
+      >
+        {quoteToDelete && (
+          <div className="space-y-4 text-xs">
+            <p className="text-zinc-600 leading-relaxed">
+              Tem certeza que deseja excluir o orçamento de{' '}
+              <strong className="text-zinc-900">{quoteToDelete.client_name}</strong> (
+              {quoteToDelete.package_name || quoteToDelete.event_type})? O link público da proposta
+              deixará de funcionar.
+            </p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setQuoteToDelete(null)}
+                className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-700"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  deleteQuote(quoteToDelete.id);
+                  setQuoteToDelete(null);
+                  toast('Orçamento excluído com sucesso.', 'info');
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-medium cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Excluir Orçamento</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </AppShell>
   );
 }

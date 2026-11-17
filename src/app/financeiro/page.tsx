@@ -16,18 +16,21 @@ import {
   Filter,
   Search,
   Check,
+  RotateCcw,
+  Trash2,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
-import { PaymentStatus } from '@/types';
+import { Payment, PaymentStatus } from '@/types';
 
 export default function FinancePage() {
   const { toast } = useToast();
-  const { payments, events, clients, addPayment, updatePayment } = useAppStore();
+  const { payments, events, clients, addPayment, updatePayment, deletePayment } = useAppStore();
   const today = useToday();
   const [statusFilter, setStatusFilter] = useState<'todos' | PaymentStatus>('todos');
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
 
   const [form, setForm] = useState({
     event_id: '',
@@ -110,6 +113,20 @@ export default function FinancePage() {
       paid_at: new Date().toISOString(),
     });
     toast('Pagamento confirmado como PAGO!', 'success');
+  };
+
+  const handleUndoPayment = (p: Payment) => {
+    const todayStr = today || new Date().toISOString().split('T')[0];
+    const nextStatus: PaymentStatus =
+      p.due_date && p.due_date < todayStr ? 'atrasado' : 'pendente';
+    updatePayment(p.id, {
+      status: nextStatus,
+      paid_at: undefined,
+    });
+    toast(
+      `Baixa desfeita! Parcela voltou para ${nextStatus === 'atrasado' ? 'Atrasado' : 'Pendente'}.`,
+      'info'
+    );
   };
 
   return (
@@ -248,20 +265,41 @@ export default function FinancePage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 pt-2 sm:pt-0 border-zinc-100">
+                    <div className="flex items-center justify-between sm:justify-end gap-2.5 border-t sm:border-t-0 pt-2 sm:pt-0 border-zinc-100">
                       <span className="text-sm font-bold text-zinc-900 font-serif-brand">
                         {formatCurrency(p.amount)}
                       </span>
 
-                      {p.status !== 'pago' && (
+                      <div className="flex items-center gap-1.5">
+                        {p.status !== 'pago' ? (
+                          <button
+                            onClick={() => handleMarkAsPaid(p.id)}
+                            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Baixar</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleUndoPayment(p)}
+                            className="px-2.5 py-1.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-100 text-zinc-700 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                            title="Desfazer baixa do pagamento"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5 text-zinc-500" />
+                            <span>Desfazer</span>
+                          </button>
+                        )}
+
                         <button
-                          onClick={() => handleMarkAsPaid(p.id)}
-                          className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium flex items-center gap-1 shadow-xs transition-colors"
+                          type="button"
+                          onClick={() => setPaymentToDelete(p)}
+                          className="p-2 rounded-xl text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                          title="Excluir parcela"
                         >
-                          <Check className="w-3.5 h-3.5" />
-                          <span>Baixar</span>
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
-                      )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -389,6 +427,47 @@ export default function FinancePage() {
               </button>
             </div>
           </form>
+        </Modal>
+
+        {/* Modal Confirmar Exclusão de Parcela */}
+        <Modal
+          isOpen={Boolean(paymentToDelete)}
+          onClose={() => setPaymentToDelete(null)}
+          title="Excluir Parcela"
+          subtitle="Esta ação não pode ser desfeita"
+          maxWidth="md"
+        >
+          {paymentToDelete && (
+            <div className="space-y-4 text-xs">
+              <p className="text-zinc-600 leading-relaxed">
+                Tem certeza que deseja excluir o lançamento{' '}
+                <strong className="text-zinc-900">{paymentToDelete.description}</strong> (
+                {formatCurrency(paymentToDelete.amount)}) de{' '}
+                <strong className="text-zinc-900">{paymentToDelete.client_name}</strong>?
+              </p>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setPaymentToDelete(null)}
+                  className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-700"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    deletePayment(paymentToDelete.id);
+                    setPaymentToDelete(null);
+                    toast('Parcela excluída do Financeiro.', 'info');
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-medium cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Excluir Parcela</span>
+                </button>
+              </div>
+            </div>
+          )}
         </Modal>
       </div>
     </AppShell>
