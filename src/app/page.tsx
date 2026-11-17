@@ -21,7 +21,6 @@ import {
   ListFilter,
   Plus,
   Sparkles,
-  TrendingUp,
   ChevronRight,
 } from 'lucide-react';
 import { QuickCreateModal } from '@/components/global/QuickCreateModal';
@@ -29,7 +28,6 @@ import { QuickCreateModal } from '@/components/global/QuickCreateModal';
 function DashboardContent() {
   const {
     events,
-    leads,
     payments,
     deliveries,
     contracts,
@@ -51,10 +49,6 @@ function DashboardContent() {
   const nextEvents = useMemo(() => {
     return sortEventsByProximity(events.filter((e) => e.status !== 'cancelado'), today);
   }, [events, today]);
-
-  const negotiationCount = useMemo(() => {
-    return leads.filter((l) => l.status === 'NEGOCIAÇÃO' || l.status === 'ORÇAMENTO ENVIADO').length;
-  }, [leads]);
 
   const pendingPayments = useMemo(() => {
     return payments.filter((p) => p.status === 'pendente' || p.status === 'atrasado');
@@ -209,8 +203,8 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* 4 Cards Principais */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* 3 Cards Principais */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Card 1 */}
           <div className="p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs hover:border-zinc-300 transition-colors">
             <div className="flex items-center justify-between">
@@ -237,29 +231,6 @@ function DashboardContent() {
           {/* Card 2 */}
           <div className="p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs hover:border-zinc-300 transition-colors">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-zinc-500">Eventos em negociação</span>
-              <div className="w-8 h-8 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center">
-                <TrendingUp className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-3">
-              <div className="text-2xl font-semibold text-zinc-900 font-serif-brand">
-                {negotiationCount}
-              </div>
-              <p className="text-[11px] text-zinc-400 mt-0.5">leads ativos no CRM</p>
-            </div>
-            <Link
-              href="/crm"
-              className="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between text-[11px] font-medium text-[#C5A880] hover:text-[#9A7A4A]"
-            >
-              <span>Acessar funil Kanban</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          {/* Card 3 */}
-          <div className="p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs hover:border-zinc-300 transition-colors">
-            <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-zinc-500">Pagamentos pendentes</span>
               <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
                 <DollarSign className="w-4 h-4" />
@@ -280,7 +251,7 @@ function DashboardContent() {
             </Link>
           </div>
 
-          {/* Card 4 */}
+          {/* Card 3 */}
           <div className="p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs hover:border-zinc-300 transition-colors">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-zinc-500">Entregas pendentes</span>
