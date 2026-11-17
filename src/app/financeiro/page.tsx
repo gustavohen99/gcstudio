@@ -270,32 +270,33 @@ export default function FinancePage() {
                         {formatCurrency(p.amount)}
                       </span>
 
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1">
                         {p.status !== 'pago' ? (
                           <button
                             onClick={() => handleMarkAsPaid(p.id)}
-                            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+                            className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 text-[11px] font-medium flex items-center gap-1 transition-colors cursor-pointer"
                           >
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-3 h-3" />
                             <span>Baixar</span>
                           </button>
                         ) : (
                           <button
                             type="button"
                             onClick={() => handleUndoPayment(p)}
-                            className="px-2.5 py-1.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-100 text-zinc-700 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
                             title="Desfazer baixa do pagamento"
+                            aria-label="Desfazer baixa"
                           >
-                            <RotateCcw className="w-3.5 h-3.5 text-zinc-500" />
-                            <span>Desfazer</span>
+                            <RotateCcw className="w-3.5 h-3.5" />
                           </button>
                         )}
 
                         <button
                           type="button"
                           onClick={() => setPaymentToDelete(p)}
-                          className="p-2 rounded-xl text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg text-zinc-300 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                           title="Excluir parcela"
+                          aria-label="Excluir parcela"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
