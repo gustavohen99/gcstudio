@@ -19,6 +19,7 @@ import {
   getSuggestedExtraSessions,
 } from '@/lib/utils';
 import { ExtraSessionsEditor } from '@/components/events/ExtraSessionsEditor';
+import { buildBriefingContext } from '@/lib/briefing-config';
 import {
   Calendar,
   Clock,
@@ -41,6 +42,8 @@ import {
   Settings,
   Check,
   Package as PackageIcon,
+  Camera,
+  Video,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
@@ -82,6 +85,7 @@ function EventDetailContent() {
         event.package_description
       )
     : null;
+  const briefingCtx = event ? buildBriefingContext(event, packages) : null;
 
   const [activeTab, setActiveTab] = useState<
     | 'resumo'
@@ -605,11 +609,21 @@ function EventDetailContent() {
 
                 {/* Briefing Fast Card */}
                 {eventBriefing && (
-                  <div className="p-6 rounded-2xl bg-white border border-[#EAEAE4] flex items-center justify-between">
+                  <div className="p-6 rounded-2xl bg-white border border-[#EAEAE4] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <span className="text-xs font-semibold text-zinc-900">Briefing dos Clientes</span>
                       <p className="text-xs text-zinc-500 mt-0.5">
-                        Status atual: <span className="font-medium text-zinc-700">{eventBriefing.status}</span>
+                        Status:{' '}
+                        <span className="font-medium text-zinc-700">
+                          {getBriefingStatusConfig(eventBriefing.status).label}
+                        </span>
+                        {briefingCtx && eventBriefing.status !== 'concluido' && (
+                          <span>
+                            {' '}
+                            • {Math.min(eventBriefing.current_step || 1, briefingCtx.steps.length)} de{' '}
+                            {briefingCtx.steps.length} etapas
+                          </span>
+                        )}
                       </p>
                     </div>
                     <div className="flex gap-2">
@@ -709,14 +723,14 @@ function EventDetailContent() {
             </div>
           )}
 
-          {/* 2. BRIEFING (Item 16) */}
+          {/* 2. BRIEFING (Adaptado ao tipo de evento e pacote) */}
           {activeTab === 'briefing' && (
             <div className="p-6 rounded-2xl bg-white border border-[#EAEAE4] space-y-6">
-              {eventBriefing ? (
+              {eventBriefing && briefingCtx ? (
                 <>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-100">
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-sm font-semibold text-zinc-900">
                           Briefing de Cobertura do Evento
                         </h3>
@@ -729,8 +743,29 @@ function EventDetailContent() {
                         </span>
                       </div>
                       <p className="text-xs text-zinc-500 mt-1">
-                        Link público sem necessidade de login para os clientes responderem via celular.
+                        Formulário adaptado automaticamente ao tipo de evento ({event.type}) e ao pacote contratado ({briefingCtx.steps.length} etapas).
                       </p>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-2 text-[10px]">
+                        <span className="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-700 font-medium">
+                          {event.type}
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FAF7F2] border border-[#E6DFD3] text-[#8B6E3F] font-medium">
+                          {briefingCtx.hasVideo ? (
+                            <>
+                              <Video className="w-3 h-3" /> Foto & Vídeo
+                            </>
+                          ) : (
+                            <>
+                              <Camera className="w-3 h-3" /> Somente Fotografia
+                            </>
+                          )}
+                        </span>
+                        {briefingCtx.hasMakingOf && (
+                          <span className="px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200/80 text-amber-800 font-medium">
+                            Com Making Of
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Botões do Item 16 */}
@@ -762,46 +797,137 @@ function EventDetailContent() {
                     </div>
                   </div>
 
-                  {/* Informações preenchidas */}
+                  {/* Informações preenchidas adaptadas ao contexto */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
                     <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-200/80 space-y-2">
                       <h4 className="font-semibold text-zinc-900">Locais e Horários</h4>
+                      {briefingCtx.hasMakingOf && (
+                        <p>
+                          <strong className="text-zinc-600">Making of:</strong>{' '}
+                          {eventBriefing.event_info?.making_of_address || 'Não preenchido'}
+                        </p>
+                      )}
                       <p>
-                        <strong className="text-zinc-600">Making of:</strong>{' '}
-                        {eventBriefing.event_info?.making_of_address || 'Não preenchido'}
-                      </p>
-                      <p>
-                        <strong className="text-zinc-600">Chegada da Equipe:</strong>{' '}
+                        <strong className="text-zinc-600">{briefingCtx.copy.arrivalLabel}:</strong>{' '}
                         {eventBriefing.event_info?.team_arrival_time || '13:00'}
                       </p>
+                      {briefingCtx.copy.showCeremonyTimeAndLocation && (
+                        <p>
+                          <strong className="text-zinc-600">Cerimônia:</strong>{' '}
+                          {eventBriefing.event_info?.ceremony_location || event.location}
+                          {eventBriefing.event_info?.ceremony_time
+                            ? ` (${eventBriefing.event_info.ceremony_time})`
+                            : ''}
+                        </p>
+                      )}
                       <p>
-                        <strong className="text-zinc-600">Cerimônia:</strong>{' '}
-                        {eventBriefing.event_info?.ceremony_location || event.location}
-                      </p>
-                      <p>
-                        <strong className="text-zinc-600">Recepção:</strong>{' '}
+                        <strong className="text-zinc-600">
+                          {briefingCtx.copy.receptionLocationLabel}:
+                        </strong>{' '}
                         {eventBriefing.event_info?.reception_location || event.location}
+                        {eventBriefing.event_info?.reception_time
+                          ? ` (${eventBriefing.event_info.reception_time})`
+                          : ''}
                       </p>
                     </div>
+
+                    {briefingCtx.hasCeremony && (
+                      <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-200/80 space-y-2">
+                        <h4 className="font-semibold text-zinc-900">
+                          {briefingCtx.profile === '15_anos'
+                            ? 'Cerimonial & Protocolo'
+                            : 'Cerimônia e Entradas'}
+                        </h4>
+                        <p>
+                          <strong className="text-zinc-600">
+                            {briefingCtx.copy.celebrantLabel}:
+                          </strong>{' '}
+                          {eventBriefing.ceremony_info?.celebrant || 'A definir'}
+                        </p>
+                        <p>
+                          <strong className="text-zinc-600">
+                            {briefingCtx.copy.specialEntrancesLabel}:
+                          </strong>{' '}
+                          {eventBriefing.ceremony_info?.special_entrances || 'Nenhuma registrada'}
+                        </p>
+                        <p>
+                          <strong className="text-zinc-600">Observações:</strong>{' '}
+                          {eventBriefing.ceremony_info?.notes || 'Nenhuma'}
+                        </p>
+                      </div>
+                    )}
+
+                    {(briefingCtx.hasSpecialMoments || briefingCtx.hasParty) && (
+                      <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-200/80 space-y-2">
+                        <h4 className="font-semibold text-zinc-900">Momentos & Festa</h4>
+                        {briefingCtx.hasSpecialMoments && (
+                          <>
+                            <p>
+                              <strong className="text-zinc-600">Surpresas:</strong>{' '}
+                              {eventBriefing.special_moments?.surprise_details || 'Nenhuma informada'}
+                            </p>
+                            <p>
+                              <strong className="text-zinc-600">Homenagens / Discursos:</strong>{' '}
+                              {eventBriefing.special_moments?.tribute_details ||
+                                eventBriefing.special_moments?.speech_details ||
+                                'Nenhum informado'}
+                            </p>
+                          </>
+                        )}
+                        {briefingCtx.hasParty && (
+                          <p>
+                            <strong className="text-zinc-600">Atrações / Dinâmicas:</strong>{' '}
+                            {eventBriefing.party_info?.attractions ||
+                              eventBriefing.party_info?.games ||
+                              'Não informado'}
+                          </p>
+                        )}
+                      </div>
+                    )}
 
                     <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-200/80 space-y-2">
-                      <h4 className="font-semibold text-zinc-900">Cerimônia e Entradas</h4>
+                      <h4 className="font-semibold text-zinc-900">Preferências Fotográficas</h4>
                       <p>
-                        <strong className="text-zinc-600">Celebrante:</strong>{' '}
-                        {eventBriefing.ceremony_info?.celebrant || 'A definir'}
+                        <strong className="text-zinc-600">Estilo preferido:</strong>{' '}
+                        <span className="capitalize">
+                          {eventBriefing.preferences?.style || 'misto'}
+                        </span>
                       </p>
                       <p>
-                        <strong className="text-zinc-600">Entradas especiais:</strong>{' '}
-                        {eventBriefing.ceremony_info?.special_entrances || 'Nenhuma registrada'}
+                        <strong className="text-zinc-600">O que mais valorizam:</strong>{' '}
+                        {eventBriefing.preferences?.photography_favorites || 'Não preenchido'}
                       </p>
-                      <p>
-                        <strong className="text-zinc-600">Observações:</strong>{' '}
-                        {eventBriefing.ceremony_info?.notes || 'Nenhuma'}
-                      </p>
+                      {eventBriefing.preferences?.dislikes && (
+                        <p>
+                          <strong className="text-zinc-600">Evitar:</strong>{' '}
+                          {eventBriefing.preferences.dislikes}
+                        </p>
+                      )}
                     </div>
+
+                    {briefingCtx.hasVideo && (
+                      <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-200/80 space-y-2 md:col-span-2">
+                        <h4 className="font-semibold text-zinc-900 flex items-center gap-1.5">
+                          <Video className="w-3.5 h-3.5 text-[#C5A880]" />
+                          Direção de Vídeo & Cinema
+                        </h4>
+                        <p>
+                          <strong className="text-zinc-600">Música especial:</strong>{' '}
+                          {eventBriefing.video_info?.important_music || 'A definir'}
+                        </p>
+                        <p>
+                          <strong className="text-zinc-600">Cenas essenciais no filme:</strong>{' '}
+                          {eventBriefing.video_info?.essential_film_moments || 'Não preenchido'}
+                        </p>
+                        <p>
+                          <strong className="text-zinc-600">Depoimentos durante o evento:</strong>{' '}
+                          {eventBriefing.video_info?.record_testimonials ? 'Sim' : 'Não'}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Pessoas Importantes (Item 15 - Etapa 3) */}
+                  {/* Pessoas Importantes */}
                   <div className="space-y-3">
                     <h4 className="text-xs font-semibold text-zinc-900 uppercase tracking-wider">
                       Pessoas Importantes Cadastradas
@@ -830,7 +956,7 @@ function EventDetailContent() {
                     )}
                   </div>
 
-                  {/* Fotos Obrigatórias (Item 15 - Etapa 4) */}
+                  {/* Fotos Obrigatórias */}
                   <div className="space-y-3">
                     <h4 className="text-xs font-semibold text-zinc-900 uppercase tracking-wider">
                       Fotos Que Não Podem Faltar

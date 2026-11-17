@@ -13,6 +13,7 @@ import {
   sortEventsByProximity,
   buildAgendaEntries,
 } from '@/lib/utils';
+import { buildBriefingContext } from '@/lib/briefing-config';
 import {
   Calendar,
   Clock,
@@ -40,6 +41,7 @@ function DashboardContent() {
     contracts,
     briefings,
     galleries,
+    packages,
   } = useAppStore();
   const today = useToday();
 
@@ -140,10 +142,12 @@ function DashboardContent() {
       .filter((b) => b.status === 'nao_enviado' || b.status === 'em_preenchimento')
       .forEach((b) => {
         const ev = events.find((e) => e.id === b.event_id);
+        const totalSteps = buildBriefingContext(ev, packages).steps.length;
+        const step = Math.min(Math.max(1, b.current_step || 1), totalSteps);
         list.push({
           id: 'b-' + b.id,
           title: `Briefing: ${ev ? ev.name : 'Evento'}`,
-          desc: `Status: ${b.status === 'nao_enviado' ? 'Não enviado ao cliente' : `Etapa ${b.current_step} de 8`}`,
+          desc: `Status: ${b.status === 'nao_enviado' ? 'Não enviado ao cliente' : `Etapa ${step} de ${totalSteps}`}`,
           type: 'briefing',
           link: ev ? `/eventos/${ev.id}` : '/briefings',
           badge: 'Atenção briefing',
@@ -168,7 +172,7 @@ function DashboardContent() {
     });
 
     return list;
-  }, [contracts, payments, briefings, events, galleries]);
+  }, [contracts, payments, briefings, events, galleries, packages]);
 
   return (
     <AppShell>

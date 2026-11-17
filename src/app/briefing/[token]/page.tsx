@@ -3,36 +3,35 @@
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useAppStore } from '@/lib/store';
-import { formatDate } from '@/lib/utils';
+import { buildBriefingContext } from '@/lib/briefing-config';
 import {
-  Sparkles,
   ArrowRight,
   ArrowLeft,
   CheckCircle2,
-  Plus,
   Trash2,
-  Calendar,
-  Clock,
-  MapPin,
-  Heart,
   Camera,
   Video,
-  Music,
-  Users,
-  Check,
+  Sparkles,
   Send,
+  Calendar,
 } from 'lucide-react';
 import { BriefingPerson, BriefingRequiredPhoto } from '@/types';
+import { formatDate } from '@/lib/utils';
 
 function BriefingContent() {
   const params = useParams();
   const token = (params?.token as string) || '';
-  const { briefings, events, submitBriefing, updateBriefing } = useAppStore();
+  const { briefings, events, packages, submitBriefing, updateBriefing } = useAppStore();
 
   const briefing = briefings.find((b) => b.token === token);
   const event = briefing ? events.find((e) => e.id === briefing.event_id) : null;
+  const ctx = buildBriefingContext(event, packages);
 
+  const totalSteps = ctx.steps.length;
   const [step, setStep] = useState(briefing?.current_step || 1);
+  const safeStep = Math.min(Math.max(1, step), totalSteps);
+  const currentStepDef = ctx.steps[safeStep - 1] || ctx.steps[0];
+
   const [submitted, setSubmitted] = useState(briefing?.status === 'concluido');
 
   // Form State
@@ -40,7 +39,7 @@ function BriefingContent() {
     briefing?.event_info || {
       date: event?.date || '',
       ceremony_time: event?.time || '16:30',
-      reception_time: '18:30',
+      reception_time: event?.time || '18:30',
       ceremony_location: event?.location || '',
       reception_location: event?.location || '',
       making_of_address: '',
@@ -51,7 +50,10 @@ function BriefingContent() {
 
   const [ceremonyInfo, setCeremonyInfo] = useState(
     briefing?.ceremony_info || {
-      type: 'Religiosa com efeito civil',
+      type:
+        ctx.profile === '15_anos'
+          ? 'Tradicional (Valsa & Protocolo)'
+          : 'Religiosa com efeito civil',
       celebrant: '',
       parents_entrance: true,
       godparents_entrance: true,
@@ -62,16 +64,13 @@ function BriefingContent() {
   );
 
   const [people, setPeople] = useState<BriefingPerson[]>(
-    briefing?.people || [
-      { id: 'p1', name: '', category: 'Pais da noiva', notes: '' },
-    ]
+    briefing?.people && briefing.people.length > 0 ? briefing.people : []
   );
 
   const [requiredPhotos, setRequiredPhotos] = useState<BriefingRequiredPhoto[]>(
-    briefing?.required_photos || [
-      { id: 'rp1', description: 'Foto com os pais no altar', people_involved: 'Pais', notes: '' },
-      { id: 'rp2', description: 'Foto com padrinhos e madrinhas', people_involved: 'Padrinhos', notes: '' },
-    ]
+    briefing?.required_photos && briefing.required_photos.length > 0
+      ? briefing.required_photos
+      : ctx.defaultRequiredPhotos
   );
 
   const [specialMoments, setSpecialMoments] = useState(
@@ -120,12 +119,16 @@ function BriefingContent() {
 
   // Helper additions
   const [newPersonName, setNewPersonName] = useState('');
-  const [newPersonCategory, setNewPersonCategory] = useState('Pais da noiva');
+  const [newPersonCategory, setNewPersonCategory] = useState(ctx.peopleCategories[0]);
   const [newPersonNotes, setNewPersonNotes] = useState('');
 
   const [newPhotoDesc, setNewPhotoDesc] = useState('');
   const [newPhotoPeople, setNewPhotoPeople] = useState('');
   const [newPhotoNotes, setNewPhotoNotes] = useState('');
+
+  const effectivePersonCategory = ctx.peopleCategories.includes(newPersonCategory)
+    ? newPersonCategory
+    : ctx.peopleCategories[0];
 
   if (!briefing) {
     return (
@@ -147,8 +150,9 @@ function BriefingContent() {
 
   // Save current step progress
   const saveProgress = (nextStepNumber: number) => {
+    const bounded = Math.min(Math.max(1, nextStepNumber), totalSteps);
     updateBriefing(briefing.id, {
-      current_step: nextStepNumber,
+      current_step: bounded,
       status: 'em_preenchimento',
       event_info: eventInfo,
       ceremony_info: ceremonyInfo,
@@ -159,12 +163,13 @@ function BriefingContent() {
       preferences,
       video_info: videoInfo,
     });
-    setStep(nextStepNumber);
+    setStep(bounded);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleFinalSubmit = () => {
     submitBriefing(briefing.token, {
+      current_step: totalSteps,
       event_info: eventInfo,
       ceremony_info: ceremonyInfo,
       people,
@@ -182,7 +187,7 @@ function BriefingContent() {
     <div className="min-h-screen bg-[#FBFBF9] text-[#1A1A18] selection:bg-[#C5A880]/20 selection:text-[#7A5B30] py-8 sm:py-12 px-4 sm:px-6">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Brand Header */}
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-2.5">
           <div className="inline-flex w-12 h-12 rounded-2xl bg-zinc-950 items-center justify-center text-[#C5A880] font-serif-brand font-bold text-xl shadow-md border border-zinc-800">
             G&C
           </div>
@@ -190,8 +195,51 @@ function BriefingContent() {
             G&C Studio • Briefing Oficial
           </h2>
           <p className="text-xs text-zinc-500">
-            {event ? `${event.name} — Cobertura Audiovisual` : 'Planejamento de Cobertura'}
+            {event ? `${event.name} — ${ctx.copy.headerSubtitle}` : 'Planejamento de Cobertura'}
           </p>
+
+          {/* Escopo detectado do evento e pacote */}
+          {event && (
+            <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1 text-[11px]">
+              <span className="px-2.5 py-0.5 rounded-full bg-zinc-900 text-white font-medium">
+                {event.type}
+              </span>
+              {ctx.packageInfo?.name && (
+                <span className="px-2.5 py-0.5 rounded-full bg-[#FAF7F2] border border-[#E6DFD3] text-[#8B6E3F] font-medium">
+                  {ctx.packageInfo.name}
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white border border-zinc-200 text-zinc-700 font-medium">
+                {ctx.hasVideo ? (
+                  <>
+                    <Video className="w-3 h-3 text-[#C5A880]" /> Foto & Vídeo
+                  </>
+                ) : (
+                  <>
+                    <Camera className="w-3 h-3 text-[#C5A880]" /> Fotografia
+                  </>
+                )}
+              </span>
+              {ctx.hasMakingOf && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200/80 text-amber-800 font-medium">
+                  <Sparkles className="w-3 h-3" /> Making Of incluso
+                </span>
+              )}
+            </div>
+          )}
+
+          {event?.extra_sessions && event.extra_sessions.length > 0 && (
+            <div className="inline-flex flex-wrap items-center justify-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-[#EAEAE4] text-[11px] text-zinc-600">
+              <Calendar className="w-3.5 h-3.5 text-[#C5A880]" />
+              <span>Datas extras no pacote:</span>
+              {event.extra_sessions.map((s) => (
+                <span key={s.id} className="font-medium text-zinc-800">
+                  {s.label}
+                  {s.date ? ` (${formatDate(s.date)})` : ' (a definir)'}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Success Screen After Submit */}
@@ -217,40 +265,65 @@ function BriefingContent() {
         ) : (
           <div className="bg-white rounded-3xl border border-[#EAEAE4] shadow-sm overflow-hidden">
             {/* Progress Bar & Step Counter */}
-            <div className="p-6 border-b border-zinc-100 bg-[#FAF7F2]/60">
-              <div className="flex items-center justify-between text-xs font-semibold text-zinc-800 mb-2">
+            <div className="p-6 border-b border-zinc-100 bg-[#FAF7F2]/60 space-y-3">
+              <div className="flex items-center justify-between text-xs font-semibold text-zinc-800">
                 <span className="uppercase tracking-wider text-[11px] text-[#8B6E3F]">
-                  ETAPA {step} DE 8
+                  ETAPA {safeStep} DE {totalSteps}
                 </span>
                 <span className="text-zinc-500 font-medium">
-                  {Math.round((step / 8) * 100)}% Concluído
+                  {Math.round((safeStep / totalSteps) * 100)}% Concluído
                 </span>
               </div>
               <div className="w-full bg-zinc-200 h-2 rounded-full overflow-hidden">
                 <div
                   className="bg-[#C5A880] h-full transition-all duration-300 ease-out"
-                  style={{ width: `${(step / 8) * 100}%` }}
+                  style={{ width: `${(safeStep / totalSteps) * 100}%` }}
                 />
+              </div>
+
+              {/* Etapas ativas para este pacote/evento */}
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {ctx.steps.map((st, idx) => {
+                  const stepNum = idx + 1;
+                  const isCurrent = stepNum === safeStep;
+                  const isDone = stepNum < safeStep;
+                  return (
+                    <button
+                      key={st.id}
+                      type="button"
+                      onClick={() => saveProgress(stepNum)}
+                      className={`px-2 py-1 rounded-lg text-[10px] font-medium transition-colors cursor-pointer ${
+                        isCurrent
+                          ? 'bg-zinc-900 text-white'
+                          : isDone
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/70'
+                            : 'bg-white text-zinc-500 border border-zinc-200/80 hover:border-zinc-300'
+                      }`}
+                    >
+                      {stepNum}. {st.shortLabel}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* Form Steps */}
             <div className="p-6 sm:p-8 space-y-6">
-              {/* ETAPA 1 — INFORMAÇÕES DO EVENTO */}
-              {step === 1 && (
+              {/* ETAPA: INFORMAÇÕES DO EVENTO */}
+              {currentStepDef.id === 'event_info' && (
                 <div className="space-y-5 animate-in fade-in duration-200">
                   <div>
                     <h3 className="font-serif-brand text-2xl font-medium text-zinc-900">
-                      Informações do Evento
+                      {currentStepDef.title}
                     </h3>
-                    <p className="text-xs text-zinc-500 mt-1">
-                      Horários e locais previstos para a equipe de foto e vídeo.
-                    </p>
+                    <p className="text-xs text-zinc-500 mt-1">{currentStepDef.subtitle}</p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                     <div>
-                      <label className="block font-medium text-zinc-700 mb-1">Data do Evento</label>
+                      <label className="block font-medium text-zinc-700 mb-1">
+                        {ctx.copy.dateLabel}
+                      </label>
                       <input
                         type="date"
                         value={eventInfo.date}
@@ -260,7 +333,7 @@ function BriefingContent() {
                     </div>
                     <div>
                       <label className="block font-medium text-zinc-700 mb-1">
-                        Horário de Chegada da Equipe
+                        {ctx.copy.arrivalLabel}
                       </label>
                       <input
                         type="time"
@@ -271,22 +344,26 @@ function BriefingContent() {
                         className="w-full p-3 rounded-xl border border-zinc-200 text-zinc-900 text-sm"
                       />
                     </div>
+
+                    {ctx.copy.showCeremonyTimeAndLocation && (
+                      <div>
+                        <label className="block font-medium text-zinc-700 mb-1">
+                          {ctx.copy.ceremonyTimeLabel}
+                        </label>
+                        <input
+                          type="time"
+                          value={eventInfo.ceremony_time}
+                          onChange={(e) =>
+                            setEventInfo({ ...eventInfo, ceremony_time: e.target.value })
+                          }
+                          className="w-full p-3 rounded-xl border border-zinc-200 text-zinc-900 text-sm"
+                        />
+                      </div>
+                    )}
+
                     <div>
                       <label className="block font-medium text-zinc-700 mb-1">
-                        Horário da Cerimônia
-                      </label>
-                      <input
-                        type="time"
-                        value={eventInfo.ceremony_time}
-                        onChange={(e) =>
-                          setEventInfo({ ...eventInfo, ceremony_time: e.target.value })
-                        }
-                        className="w-full p-3 rounded-xl border border-zinc-200 text-zinc-900 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-medium text-zinc-700 mb-1">
-                        Horário da Recepção / Festa
+                        {ctx.copy.receptionTimeLabel}
                       </label>
                       <input
                         type="time"
@@ -300,41 +377,47 @@ function BriefingContent() {
                   </div>
 
                   <div className="space-y-4 text-xs">
+                    {ctx.hasMakingOf && (
+                      <div>
+                        <label className="block font-medium text-zinc-700 mb-1">
+                          {ctx.copy.makingOfLabel}
+                        </label>
+                        <input
+                          type="text"
+                          placeholder={ctx.copy.makingOfPlaceholder}
+                          value={eventInfo.making_of_address}
+                          onChange={(e) =>
+                            setEventInfo({ ...eventInfo, making_of_address: e.target.value })
+                          }
+                          className="w-full p-3 rounded-xl border border-zinc-200 text-zinc-900 text-sm"
+                        />
+                      </div>
+                    )}
+
+                    {ctx.copy.showCeremonyTimeAndLocation && (
+                      <div>
+                        <label className="block font-medium text-zinc-700 mb-1">
+                          {ctx.copy.ceremonyLocationLabel}
+                        </label>
+                        <input
+                          type="text"
+                          placeholder={ctx.copy.ceremonyLocationPlaceholder}
+                          value={eventInfo.ceremony_location}
+                          onChange={(e) =>
+                            setEventInfo({ ...eventInfo, ceremony_location: e.target.value })
+                          }
+                          className="w-full p-3 rounded-xl border border-zinc-200 text-zinc-900 text-sm"
+                        />
+                      </div>
+                    )}
+
                     <div>
                       <label className="block font-medium text-zinc-700 mb-1">
-                        Endereço do Making Of
+                        {ctx.copy.receptionLocationLabel}
                       </label>
                       <input
                         type="text"
-                        placeholder="Ex: Hotel Fasano - Rua Vitório Fasano, 88"
-                        value={eventInfo.making_of_address}
-                        onChange={(e) =>
-                          setEventInfo({ ...eventInfo, making_of_address: e.target.value })
-                        }
-                        className="w-full p-3 rounded-xl border border-zinc-200 text-zinc-900 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-medium text-zinc-700 mb-1">
-                        Local da Cerimônia
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Ex: Paróquia Nossa Senhora do Brasil"
-                        value={eventInfo.ceremony_location}
-                        onChange={(e) =>
-                          setEventInfo({ ...eventInfo, ceremony_location: e.target.value })
-                        }
-                        className="w-full p-3 rounded-xl border border-zinc-200 text-zinc-900 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-medium text-zinc-700 mb-1">
-                        Local da Recepção
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Ex: Casa Bisutti"
+                        placeholder={ctx.copy.receptionLocationPlaceholder}
                         value={eventInfo.reception_location}
                         onChange={(e) =>
                           setEventInfo({ ...eventInfo, reception_location: e.target.value })
@@ -346,24 +429,24 @@ function BriefingContent() {
                 </div>
               )}
 
-              {/* ETAPA 2 — CERIMÔNIA */}
-              {step === 2 && (
+              {/* ETAPA: CERIMÔNIA / CERIMONIAL */}
+              {currentStepDef.id === 'ceremony' && (
                 <div className="space-y-5 animate-in fade-in duration-200">
                   <div>
                     <h3 className="font-serif-brand text-2xl font-medium text-zinc-900">
-                      Detalhes da Cerimônia
+                      {currentStepDef.title}
                     </h3>
-                    <p className="text-xs text-zinc-500 mt-1">
-                      Entradas, celebrante e dinâmica do cortejo.
-                    </p>
+                    <p className="text-xs text-zinc-500 mt-1">{currentStepDef.subtitle}</p>
                   </div>
 
                   <div className="space-y-4 text-xs">
                     <div>
-                      <label className="block font-medium text-zinc-700 mb-1">Tipo de Cerimônia</label>
+                      <label className="block font-medium text-zinc-700 mb-1">
+                        {ctx.copy.ceremonyTypeLabel}
+                      </label>
                       <input
                         type="text"
-                        placeholder="Ex: Religiosa, Ecumênica, Civil no local, etc."
+                        placeholder={ctx.copy.ceremonyTypePlaceholder}
                         value={ceremonyInfo.type}
                         onChange={(e) => setCeremonyInfo({ ...ceremonyInfo, type: e.target.value })}
                         className="w-full p-3 rounded-xl border border-zinc-200 text-zinc-900 text-sm"
@@ -371,10 +454,12 @@ function BriefingContent() {
                     </div>
 
                     <div>
-                      <label className="block font-medium text-zinc-700 mb-1">Quem celebrará?</label>
+                      <label className="block font-medium text-zinc-700 mb-1">
+                        {ctx.copy.celebrantLabel}
+                      </label>
                       <input
                         type="text"
-                        placeholder="Ex: Padre Michelino / Pastor Paulo / Amigo da família"
+                        placeholder={ctx.copy.celebrantPlaceholder}
                         value={ceremonyInfo.celebrant}
                         onChange={(e) =>
                           setCeremonyInfo({ ...ceremonyInfo, celebrant: e.target.value })
@@ -384,49 +469,60 @@ function BriefingContent() {
                     </div>
 
                     <div className="space-y-3 pt-2">
-                      <span className="font-semibold text-zinc-800 block">Cortejo de Entradas:</span>
+                      <span className="font-semibold text-zinc-800 block">
+                        {ctx.copy.entourageHeading}
+                      </span>
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={ceremonyInfo.parents_entrance}
                           onChange={(e) =>
-                            setCeremonyInfo({ ...ceremonyInfo, parents_entrance: e.target.checked })
+                            setCeremonyInfo({
+                              ...ceremonyInfo,
+                              parents_entrance: e.target.checked,
+                            })
                           }
                           className="w-4 h-4 rounded text-[#C5A880]"
                         />
-                        <span>Haverá entrada dos pais?</span>
+                        <span>{ctx.copy.parentsEntranceLabel}</span>
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={ceremonyInfo.godparents_entrance}
                           onChange={(e) =>
-                            setCeremonyInfo({ ...ceremonyInfo, godparents_entrance: e.target.checked })
+                            setCeremonyInfo({
+                              ...ceremonyInfo,
+                              godparents_entrance: e.target.checked,
+                            })
                           }
                           className="w-4 h-4 rounded text-[#C5A880]"
                         />
-                        <span>Haverá entrada de padrinhos?</span>
+                        <span>{ctx.copy.godparentsEntranceLabel}</span>
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={ceremonyInfo.pages_flower_girls}
                           onChange={(e) =>
-                            setCeremonyInfo({ ...ceremonyInfo, pages_flower_girls: e.target.checked })
+                            setCeremonyInfo({
+                              ...ceremonyInfo,
+                              pages_flower_girls: e.target.checked,
+                            })
                           }
                           className="w-4 h-4 rounded text-[#C5A880]"
                         />
-                        <span>Haverá pajens / daminhas?</span>
+                        <span>{ctx.copy.pagesFlowerGirlsLabel}</span>
                       </label>
                     </div>
 
                     <div>
                       <label className="block font-medium text-zinc-700 mb-1">
-                        Existem entradas especiais?
+                        {ctx.copy.specialEntrancesLabel}
                       </label>
                       <input
                         type="text"
-                        placeholder="Ex: Avó trazendo as alianças, pet na cerimônia, etc."
+                        placeholder={ctx.copy.specialEntrancesPlaceholder}
                         value={ceremonyInfo.special_entrances}
                         onChange={(e) =>
                           setCeremonyInfo({ ...ceremonyInfo, special_entrances: e.target.value })
@@ -437,7 +533,7 @@ function BriefingContent() {
 
                     <div>
                       <label className="block font-medium text-zinc-700 mb-1">
-                        Observações da Cerimônia
+                        {ctx.copy.ceremonyNotesLabel}
                       </label>
                       <textarea
                         rows={2}
@@ -453,19 +549,16 @@ function BriefingContent() {
                 </div>
               )}
 
-              {/* ETAPA 3 — PESSOAS IMPORTANTES */}
-              {step === 3 && (
+              {/* ETAPA: PESSOAS IMPORTANTES */}
+              {currentStepDef.id === 'people' && (
                 <div className="space-y-5 animate-in fade-in duration-200">
                   <div>
                     <h3 className="font-serif-brand text-2xl font-medium text-zinc-900">
-                      Pessoas Importantes
+                      {currentStepDef.title}
                     </h3>
-                    <p className="text-xs text-zinc-500 mt-1">
-                      Avós, pais, padrinhos ou amigos próximos que devem ter atenção especial da equipe.
-                    </p>
+                    <p className="text-xs text-zinc-500 mt-1">{currentStepDef.subtitle}</p>
                   </div>
 
-                  {/* Add person form */}
                   <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-200 space-y-3 text-xs">
                     <span className="font-semibold text-zinc-800 block">
                       + Adicionar Pessoa Importante
@@ -473,29 +566,26 @@ function BriefingContent() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <input
                         type="text"
-                        placeholder="Nome da pessoa (ex: Avó Maria)"
+                        placeholder={ctx.copy.personNamePlaceholder}
                         value={newPersonName}
                         onChange={(e) => setNewPersonName(e.target.value)}
                         className="p-2.5 rounded-xl border border-zinc-200 text-zinc-900 bg-white"
                       />
                       <select
-                        value={newPersonCategory}
+                        value={effectivePersonCategory}
                         onChange={(e) => setNewPersonCategory(e.target.value)}
                         className="p-2.5 rounded-xl border border-zinc-200 text-zinc-900 bg-white"
                       >
-                        <option value="Pais da noiva">Pais da noiva</option>
-                        <option value="Pais do noivo">Pais do noivo</option>
-                        <option value="Padrinhos">Padrinhos</option>
-                        <option value="Avós">Avós</option>
-                        <option value="Irmãos">Irmãos</option>
-                        <option value="Filhos">Filhos</option>
-                        <option value="Amigos">Amigos</option>
-                        <option value="Outras pessoas">Outras pessoas</option>
+                        {ctx.peopleCategories.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <input
                       type="text"
-                      placeholder="Observação (ex: Precisa aparecer bastante nas fotos / mobilidade reduzida)"
+                      placeholder={ctx.copy.personNotesPlaceholder}
                       value={newPersonNotes}
                       onChange={(e) => setNewPersonNotes(e.target.value)}
                       className="w-full p-2.5 rounded-xl border border-zinc-200 text-zinc-900 bg-white"
@@ -509,7 +599,7 @@ function BriefingContent() {
                           {
                             id: 'p-' + Date.now(),
                             name: newPersonName.trim(),
-                            category: newPersonCategory,
+                            category: effectivePersonCategory,
                             notes: newPersonNotes.trim(),
                           },
                         ]);
@@ -522,53 +612,55 @@ function BriefingContent() {
                     </button>
                   </div>
 
-                  {/* List of registered people */}
                   <div className="space-y-2">
-                    {people.map((p) => (
-                      <div
-                        key={p.id}
-                        className="p-3.5 rounded-xl border border-zinc-200 bg-white flex items-center justify-between text-xs"
-                      >
-                        <div>
-                          <span className="font-semibold text-zinc-900">{p.name}</span>
-                          <span className="ml-2 text-[11px] text-[#8B6E3F] font-medium">
-                            • {p.category}
-                          </span>
-                          {p.notes && <p className="text-zinc-500 mt-0.5">{p.notes}</p>}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setPeople(people.filter((item) => item.id !== p.id))}
-                          className="p-1 text-zinc-400 hover:text-rose-600"
+                    {people.length === 0 ? (
+                      <p className="text-xs text-zinc-400 italic">
+                        Nenhuma pessoa adicionada ainda. Você pode cadastrar quantas desejar acima.
+                      </p>
+                    ) : (
+                      people.map((p) => (
+                        <div
+                          key={p.id}
+                          className="p-3.5 rounded-xl border border-zinc-200 bg-white flex items-center justify-between text-xs"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
+                          <div>
+                            <span className="font-semibold text-zinc-900">{p.name}</span>
+                            <span className="ml-2 text-[11px] text-[#8B6E3F] font-medium">
+                              • {p.category}
+                            </span>
+                            {p.notes && <p className="text-zinc-500 mt-0.5">{p.notes}</p>}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setPeople(people.filter((item) => item.id !== p.id))}
+                            className="p-1 text-zinc-400 hover:text-rose-600"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* ETAPA 4 — FOTOS QUE NÃO PODEM FALTAR */}
-              {step === 4 && (
+              {/* ETAPA: FOTOS QUE NÃO PODEM FALTAR */}
+              {currentStepDef.id === 'required_photos' && (
                 <div className="space-y-5 animate-in fade-in duration-200">
                   <div>
                     <h3 className="font-serif-brand text-2xl font-medium text-zinc-900">
-                      Fotos Que Não Podem Faltar
+                      {currentStepDef.title}
                     </h3>
-                    <p className="text-xs text-zinc-500 mt-1">
-                      Fotos protocolares, com a família, amigos ou poses que você faz questão absoluta.
-                    </p>
+                    <p className="text-xs text-zinc-500 mt-1">{currentStepDef.subtitle}</p>
                   </div>
 
-                  {/* Add Photo Form */}
                   <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-200 space-y-3 text-xs">
                     <span className="font-semibold text-zinc-800 block">
                       + Adicionar Foto Obrigatória
                     </span>
                     <input
                       type="text"
-                      placeholder="Descrição (ex: Foto com os 12 casais de padrinhos no altar)"
+                      placeholder={ctx.copy.photoDescPlaceholder}
                       value={newPhotoDesc}
                       onChange={(e) => setNewPhotoDesc(e.target.value)}
                       className="w-full p-2.5 rounded-xl border border-zinc-200 text-zinc-900 bg-white"
@@ -576,7 +668,7 @@ function BriefingContent() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <input
                         type="text"
-                        placeholder="Pessoas envolvidas (ex: Padrinhos / Família)"
+                        placeholder={ctx.copy.photoPeoplePlaceholder}
                         value={newPhotoPeople}
                         onChange={(e) => setNewPhotoPeople(e.target.value)}
                         className="p-2.5 rounded-xl border border-zinc-200 text-zinc-900 bg-white"
@@ -612,7 +704,6 @@ function BriefingContent() {
                     </button>
                   </div>
 
-                  {/* List of registered photos */}
                   <div className="space-y-2">
                     {requiredPhotos.map((rp) => (
                       <div
@@ -643,16 +734,14 @@ function BriefingContent() {
                 </div>
               )}
 
-              {/* ETAPA 5 — MOMENTOS ESPECIAIS */}
-              {step === 5 && (
+              {/* ETAPA: MOMENTOS ESPECIAIS */}
+              {currentStepDef.id === 'special_moments' && (
                 <div className="space-y-5 animate-in fade-in duration-200">
                   <div>
                     <h3 className="font-serif-brand text-2xl font-medium text-zinc-900">
-                      Momentos Especiais & Surpresas
+                      {currentStepDef.title}
                     </h3>
-                    <p className="text-xs text-zinc-500 mt-1">
-                      Avise nossa equipe com antecedência para prepararmos a melhor posição de câmera e luz.
-                    </p>
+                    <p className="text-xs text-zinc-500 mt-1">{currentStepDef.subtitle}</p>
                   </div>
 
                   <div className="space-y-4 text-xs">
@@ -662,7 +751,7 @@ function BriefingContent() {
                       </label>
                       <textarea
                         rows={2}
-                        placeholder="Ex: O noivo tocará saxofone, entrada surpresa de alguém especial..."
+                        placeholder={ctx.copy.surprisePlaceholder}
                         value={specialMoments.surprise_details}
                         onChange={(e) =>
                           setSpecialMoments({
@@ -681,7 +770,7 @@ function BriefingContent() {
                       </label>
                       <textarea
                         rows={2}
-                        placeholder="Descreva se haverá vídeo, entrega de buquê, etc."
+                        placeholder={ctx.copy.tributePlaceholder}
                         value={specialMoments.tribute_details}
                         onChange={(e) =>
                           setSpecialMoments({
@@ -696,11 +785,11 @@ function BriefingContent() {
 
                     <div>
                       <label className="block font-medium text-zinc-700 mb-1">
-                        Haverá discursos durante o brinde ou jantar?
+                        {ctx.copy.speechLabel}
                       </label>
                       <input
                         type="text"
-                        placeholder="Quem fará discurso?"
+                        placeholder={ctx.copy.speechPlaceholder}
                         value={specialMoments.speech_details}
                         onChange={(e) =>
                           setSpecialMoments({
@@ -713,48 +802,48 @@ function BriefingContent() {
                       />
                     </div>
 
-                    <div>
-                      <label className="block font-medium text-zinc-700 mb-1">
-                        Haverá dança coreografada especial?
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Ex: Valsa coreografada com os padrinhos / dança divertida"
-                        value={specialMoments.special_dance_details}
-                        onChange={(e) =>
-                          setSpecialMoments({
-                            ...specialMoments,
-                            special_dance_details: e.target.value,
-                            has_special_dance: Boolean(e.target.value),
-                          })
-                        }
-                        className="w-full p-3 rounded-xl border border-zinc-200 text-zinc-900 text-sm"
-                      />
-                    </div>
+                    {ctx.profile !== 'corporativo' && (
+                      <div>
+                        <label className="block font-medium text-zinc-700 mb-1">
+                          {ctx.copy.danceLabel}
+                        </label>
+                        <input
+                          type="text"
+                          placeholder={ctx.copy.dancePlaceholder}
+                          value={specialMoments.special_dance_details}
+                          onChange={(e) =>
+                            setSpecialMoments({
+                              ...specialMoments,
+                              special_dance_details: e.target.value,
+                              has_special_dance: Boolean(e.target.value),
+                            })
+                          }
+                          className="w-full p-3 rounded-xl border border-zinc-200 text-zinc-900 text-sm"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* ETAPA 6 — FESTA */}
-              {step === 6 && (
+              {/* ETAPA: DINÂMICA DA FESTA */}
+              {currentStepDef.id === 'party' && (
                 <div className="space-y-5 animate-in fade-in duration-200">
                   <div>
                     <h3 className="font-serif-brand text-2xl font-medium text-zinc-900">
-                      Dinâmica da Festa
+                      {currentStepDef.title}
                     </h3>
-                    <p className="text-xs text-zinc-500 mt-1">
-                      Atrações musicais, brincadeiras e momentos que NÃO devem ser fotografados.
-                    </p>
+                    <p className="text-xs text-zinc-500 mt-1">{currentStepDef.subtitle}</p>
                   </div>
 
                   <div className="space-y-4 text-xs">
                     <div>
                       <label className="block font-medium text-zinc-700 mb-1">
-                        Haverá atrações na festa? (Bandas, DJs convidados, robô de LED, etc.)
+                        {ctx.copy.attractionsLabel}
                       </label>
                       <input
                         type="text"
-                        placeholder="Ex: Banda de rock às 23h e escola de samba à 01h"
+                        placeholder={ctx.copy.attractionsPlaceholder}
                         value={partyInfo.attractions}
                         onChange={(e) =>
                           setPartyInfo({ ...partyInfo, attractions: e.target.value })
@@ -765,11 +854,11 @@ function BriefingContent() {
 
                     <div>
                       <label className="block font-medium text-zinc-700 mb-1">
-                        Brincadeiras da festa (Buquê com fitas, hora do sapato, gravata)
+                        {ctx.copy.gamesLabel}
                       </label>
                       <input
                         type="text"
-                        placeholder="Descreva as brincadeiras previstas"
+                        placeholder={ctx.copy.gamesPlaceholder}
                         value={partyInfo.games}
                         onChange={(e) => setPartyInfo({ ...partyInfo, games: e.target.value })}
                         className="w-full p-3 rounded-xl border border-zinc-200 text-zinc-900 text-sm"
@@ -778,11 +867,11 @@ function BriefingContent() {
 
                     <div>
                       <label className="block font-medium text-zinc-700 mb-1">
-                        Existe algum momento que vocês NÃO querem que seja fotografado?
+                        Existe algum momento que NÃO querem que seja fotografado?
                       </label>
                       <textarea
                         rows={2}
-                        placeholder="Ex: Evitar fotos dos convidados comendo no buffet / momentos de descanso"
+                        placeholder={ctx.copy.noPhotoPlaceholder}
                         value={partyInfo.no_photo_moments}
                         onChange={(e) =>
                           setPartyInfo({ ...partyInfo, no_photo_moments: e.target.value })
@@ -794,16 +883,14 @@ function BriefingContent() {
                 </div>
               )}
 
-              {/* ETAPA 7 — PREFERÊNCIAS FOTOGRÁFICAS */}
-              {step === 7 && (
+              {/* ETAPA: PREFERÊNCIAS FOTOGRÁFICAS */}
+              {currentStepDef.id === 'preferences' && (
                 <div className="space-y-5 animate-in fade-in duration-200">
                   <div>
                     <h3 className="font-serif-brand text-2xl font-medium text-zinc-900">
-                      Preferências Fotográficas
+                      {currentStepDef.title}
                     </h3>
-                    <p className="text-xs text-zinc-500 mt-1">
-                      Alinhe a linguagem estética das suas fotos com a nossa equipe.
-                    </p>
+                    <p className="text-xs text-zinc-500 mt-1">{currentStepDef.subtitle}</p>
                   </div>
 
                   <div className="space-y-4 text-xs">
@@ -855,7 +942,7 @@ function BriefingContent() {
 
                     <div>
                       <label className="block font-medium text-zinc-700 mb-1">
-                        Existe algo que vocês NÃO gostam em fotos de eventos?
+                        Existe algo que NÃO gostam em fotos?
                       </label>
                       <textarea
                         rows={2}
@@ -871,26 +958,24 @@ function BriefingContent() {
                 </div>
               )}
 
-              {/* ETAPA 8 — VÍDEO & CINEMATOGRAFIA */}
-              {step === 8 && (
+              {/* ETAPA: VÍDEO & CINEMATOGRAFIA (somente se o pacote/evento inclui vídeo) */}
+              {currentStepDef.id === 'video' && ctx.hasVideo && (
                 <div className="space-y-5 animate-in fade-in duration-200">
                   <div>
                     <h3 className="font-serif-brand text-2xl font-medium text-zinc-900">
-                      Direção de Vídeo & Cinema
+                      {currentStepDef.title}
                     </h3>
-                    <p className="text-xs text-zinc-500 mt-1">
-                      Músicas marcantes, discursos essenciais e narrativa do seu filme.
-                    </p>
+                    <p className="text-xs text-zinc-500 mt-1">{currentStepDef.subtitle}</p>
                   </div>
 
                   <div className="space-y-4 text-xs">
                     <div>
                       <label className="block font-medium text-zinc-700 mb-1">
-                        Existe alguma música muito importante na história de vocês?
+                        {ctx.copy.musicLabel}
                       </label>
                       <input
                         type="text"
-                        placeholder="Ex: Nome da música e artista especial"
+                        placeholder={ctx.copy.musicPlaceholder}
                         value={videoInfo.important_music}
                         onChange={(e) =>
                           setVideoInfo({ ...videoInfo, important_music: e.target.value })
@@ -901,11 +986,11 @@ function BriefingContent() {
 
                     <div>
                       <label className="block font-medium text-zinc-700 mb-1">
-                        Existe algum momento que é ESSENCIAL estar no teaser e filme completo?
+                        Existe algum momento que é ESSENCIAL estar no vídeo?
                       </label>
                       <textarea
                         rows={2}
-                        placeholder="Ex: O abraço emocionado com a avó, os votos do noivo, etc."
+                        placeholder={ctx.copy.essentialFilmPlaceholder}
                         value={videoInfo.essential_film_moments}
                         onChange={(e) =>
                           setVideoInfo({
@@ -931,7 +1016,7 @@ function BriefingContent() {
                           className="w-4 h-4 rounded text-[#C5A880]"
                         />
                         <span className="font-medium text-zinc-800">
-                          Gostariam que nossa equipe gravasse depoimentos rápidos de amigos e pais durante a festa?
+                          {ctx.copy.testimonialsLabel}
                         </span>
                       </label>
                     </div>
@@ -940,13 +1025,13 @@ function BriefingContent() {
               )}
             </div>
 
-            {/* Navigation Bottom Controls (Item 34) */}
+            {/* Navigation Bottom Controls */}
             <div className="p-6 border-t border-zinc-100 bg-[#FAF7F2]/40 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="flex gap-2 w-full sm:w-auto">
-                {step > 1 && (
+                {safeStep > 1 && (
                   <button
                     type="button"
-                    onClick={() => saveProgress(step - 1)}
+                    onClick={() => saveProgress(safeStep - 1)}
                     className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-zinc-700 text-xs font-medium flex items-center justify-center gap-1.5"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" /> Voltar
@@ -954,17 +1039,17 @@ function BriefingContent() {
                 )}
                 <button
                   type="button"
-                  onClick={() => saveProgress(step)}
+                  onClick={() => saveProgress(safeStep)}
                   className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-zinc-700 text-xs font-medium"
                 >
                   Salvar rascunho
                 </button>
               </div>
 
-              {step < 8 ? (
+              {safeStep < totalSteps ? (
                 <button
                   type="button"
-                  onClick={() => saveProgress(step + 1)}
+                  onClick={() => saveProgress(safeStep + 1)}
                   className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium flex items-center justify-center gap-2 shadow-xs cursor-pointer"
                 >
                   <span>Continuar</span>

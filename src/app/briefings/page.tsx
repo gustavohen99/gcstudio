@@ -5,21 +5,21 @@ import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
 import { useAppStore } from '@/lib/store';
 import { formatDate, getWhatsAppUrl, getBriefingStatusConfig } from '@/lib/utils';
+import { buildBriefingContext } from '@/lib/briefing-config';
 import {
   ClipboardList,
   Copy,
   ExternalLink,
   MessageCircle,
   CheckCircle2,
-  Clock,
-  ArrowRight,
-  Users,
+  Camera,
+  Video,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 
 export default function BriefingsDashboardPage() {
   const { toast } = useToast();
-  const { briefings, events, clients } = useAppStore();
+  const { briefings, events, clients, packages } = useAppStore();
 
   const copyBriefingLink = (token: string) => {
     const url = `${window.location.origin}/briefing/${token}`;
@@ -63,6 +63,9 @@ export default function BriefingsDashboardPage() {
               const event = events.find((e) => e.id === briefing.event_id);
               const client = clients.find((c) => c.id === briefing.client_id);
               const statusCfg = getBriefingStatusConfig(briefing.status);
+              const ctx = buildBriefingContext(event, packages);
+              const totalSteps = ctx.steps.length;
+              const currentStep = Math.min(Math.max(1, briefing.current_step || 1), totalSteps);
 
               return (
                 <div
@@ -70,11 +73,29 @@ export default function BriefingsDashboardPage() {
                   className="p-5 rounded-2xl bg-white border border-[#EAEAE4] hover:border-zinc-300 shadow-xs flex flex-col justify-between space-y-4"
                 >
                   <div className="space-y-3">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-2">
                       <div>
-                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600">
-                          {event ? event.type : 'Evento'}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600">
+                            {event ? event.type : 'Evento'}
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md bg-[#FAF7F2] text-[#8B6E3F] border border-[#E6DFD3]">
+                            {ctx.hasVideo ? (
+                              <>
+                                <Video className="w-2.5 h-2.5" /> Foto + Vídeo
+                              </>
+                            ) : (
+                              <>
+                                <Camera className="w-2.5 h-2.5" /> Foto
+                              </>
+                            )}
+                          </span>
+                          {ctx.hasMakingOf && (
+                            <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200/70">
+                              Making Of
+                            </span>
+                          )}
+                        </div>
                         <h3 className="text-base font-semibold text-zinc-900 mt-1">
                           {event ? event.name : 'Evento'}
                         </h3>
@@ -84,7 +105,7 @@ export default function BriefingsDashboardPage() {
                       </div>
 
                       <span
-                        className={`text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ${statusCfg.bg} ${statusCfg.color}`}
+                        className={`text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider shrink-0 ${statusCfg.bg} ${statusCfg.color}`}
                       >
                         {statusCfg.label}
                       </span>
@@ -97,7 +118,7 @@ export default function BriefingsDashboardPage() {
                         <span>
                           {briefing.status === 'concluido'
                             ? '100% Concluído'
-                            : `Etapa ${briefing.current_step || 1} de 8`}
+                            : `Etapa ${currentStep} de ${totalSteps}`}
                         </span>
                       </div>
                       <div className="w-full bg-zinc-200 h-1.5 rounded-full overflow-hidden">
@@ -107,7 +128,7 @@ export default function BriefingsDashboardPage() {
                             width:
                               briefing.status === 'concluido'
                                 ? '100%'
-                                : `${((briefing.current_step || 1) / 8) * 100}%`,
+                                : `${(currentStep / totalSteps) * 100}%`,
                           }}
                         />
                       </div>

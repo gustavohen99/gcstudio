@@ -49,6 +49,7 @@ import {
 } from './mock-data';
 import { isSupabaseConfigured, supabase } from './supabase';
 import { resolveEventPackage } from './utils';
+import { buildBriefingContext } from './briefing-config';
 
 const STORAGE_KEY = 'gcstudio_v1_store';
 
@@ -546,7 +547,8 @@ export const useAppStore = () => {
         { id: 'chk-' + Date.now() + '-10', event_id: eventId, phase: 'pos', title: 'Publicar galeria online e entregar aos clientes', is_completed: false },
       ];
 
-      // Automação: Criar estrutura padrão de briefing
+      // Automação: Criar estrutura de briefing adaptada ao tipo de evento e pacote
+      const briefingCtx = buildBriefingContext(newEvent, globalState.packages);
       const defaultBriefing: BriefingData = {
         id: 'brf-' + Date.now(),
         event_id: eventId,
@@ -557,7 +559,7 @@ export const useAppStore = () => {
         event_info: {
           date: event.date,
           ceremony_time: event.time,
-          reception_time: '19:00',
+          reception_time: event.time || '19:00',
           ceremony_location: event.location,
           reception_location: event.location,
           making_of_address: '',
@@ -565,19 +567,27 @@ export const useAppStore = () => {
           expected_end_time: '02:00',
         },
         ceremony_info: {
-          type: 'Cerimônia',
+          type:
+            newEvent.type === '15 anos'
+              ? 'Cerimonial de 15 Anos'
+              : newEvent.type === 'Formatura'
+                ? 'Colação / Baile'
+                : briefingCtx.hasCeremony
+                  ? 'Cerimônia'
+                  : '',
           celebrant: '',
-          parents_entrance: true,
-          godparents_entrance: true,
-          pages_flower_girls: true,
+          parents_entrance: briefingCtx.hasCeremony,
+          godparents_entrance: briefingCtx.profile === 'casamento',
+          pages_flower_girls: briefingCtx.profile === 'casamento',
           special_entrances: '',
           notes: '',
         },
         people: [],
-        required_photos: [
-          { id: 'rp-d1', description: 'Foto com os pais', people_involved: 'Pais' },
-          { id: 'rp-d2', description: 'Foto com padrinhos e madrinhas', people_involved: 'Padrinhos' },
-        ],
+        required_photos: briefingCtx.defaultRequiredPhotos.map((rp, idx) => ({
+          id: `rp-${Date.now()}-${idx}`,
+          description: rp.description,
+          people_involved: rp.people_involved,
+        })),
         special_moments: {
           has_surprise: false,
           surprise_details: '',
