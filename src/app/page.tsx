@@ -546,7 +546,7 @@ function DashboardContent() {
                   <span className="text-[10px] uppercase tracking-wider text-zinc-400">
                     Recebido este mês
                   </span>
-                  <p className="text-base font-semibold text-emerald-400 mt-0.5 font-serif-brand">
+                  <p className="text-base font-semibold text-emerald-400 mt-0.5 font-sans tabular-nums tracking-tight">
                     {formatCurrency(receivedThisMonth)}
                   </p>
                 </div>
@@ -554,7 +554,7 @@ function DashboardContent() {
                   <span className="text-[10px] uppercase tracking-wider text-zinc-400">
                     A Receber
                   </span>
-                  <p className="text-base font-semibold text-[#C5A880] mt-0.5 font-serif-brand">
+                  <p className="text-base font-semibold text-[#C5A880] mt-0.5 font-sans tabular-nums tracking-tight">
                     {formatCurrency(toReceive)}
                   </p>
                 </div>

@@ -156,7 +156,7 @@ export default function FinancePage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div className="p-3.5 sm:p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs">
             <span className="text-[11px] sm:text-xs text-zinc-500">Receita Recebida</span>
-            <div className="text-lg sm:text-2xl font-bold text-emerald-600 mt-1 font-serif-brand truncate">
+            <div className="text-lg sm:text-2xl font-bold text-emerald-600 mt-1 font-sans tabular-nums tracking-tight truncate">
               {formatCurrency(metrics.received)}
             </div>
             <p className="text-[11px] text-zinc-400 mt-1">total já liquidado</p>
@@ -164,7 +164,7 @@ export default function FinancePage() {
 
           <div className="p-3.5 sm:p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs">
             <span className="text-[11px] sm:text-xs text-zinc-500">Receita Prevista</span>
-            <div className="text-lg sm:text-2xl font-bold text-zinc-900 mt-1 font-serif-brand truncate">
+            <div className="text-lg sm:text-2xl font-bold text-zinc-900 mt-1 font-sans tabular-nums tracking-tight truncate">
               {formatCurrency(metrics.totalForecast)}
             </div>
             <p className="text-[11px] text-zinc-400 mt-1">eventos confirmados</p>
@@ -172,7 +172,7 @@ export default function FinancePage() {
 
           <div className="p-3.5 sm:p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs">
             <span className="text-[11px] sm:text-xs text-zinc-500">Total a Receber</span>
-            <div className="text-lg sm:text-2xl font-bold text-[#8B6E3F] mt-1 font-serif-brand truncate">
+            <div className="text-lg sm:text-2xl font-bold text-[#8B6E3F] mt-1 font-sans tabular-nums tracking-tight truncate">
               {formatCurrency(metrics.pending)}
             </div>
             <p className="text-[11px] text-zinc-400 mt-1">parcelas abertas</p>
@@ -180,7 +180,7 @@ export default function FinancePage() {
 
           <div className="p-3.5 sm:p-5 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs">
             <span className="text-[11px] sm:text-xs text-zinc-500">Total em Atraso</span>
-            <div className="text-lg sm:text-2xl font-bold text-rose-600 mt-1 font-serif-brand truncate">
+            <div className="text-lg sm:text-2xl font-bold text-rose-600 mt-1 font-sans tabular-nums tracking-tight truncate">
               {formatCurrency(metrics.overdue)}
             </div>
             <p className="text-[11px] text-zinc-400 mt-1">requer contato</p>
@@ -268,7 +268,7 @@ export default function FinancePage() {
                     </div>
 
                     <div className="flex items-center justify-between sm:justify-end gap-2.5 border-t sm:border-t-0 pt-2 sm:pt-0 border-zinc-100">
-                      <span className="text-sm font-bold text-zinc-900 font-serif-brand">
+                      <span className="text-sm font-semibold text-zinc-900 font-sans tabular-nums tracking-tight">
                         {formatCurrency(p.amount)}
                       </span>
 
