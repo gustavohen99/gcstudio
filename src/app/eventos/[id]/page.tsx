@@ -782,6 +782,11 @@ function EventDetailContent() {
                             Com Making Of
                           </span>
                         )}
+                        {briefingCtx.hasEnsaio && briefingCtx.profile !== 'ensaio' && (
+                          <span className="px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200/80 text-[#8B6E3F] font-medium">
+                            Inclui {briefingCtx.sessionLabel}
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -921,6 +926,65 @@ function EventDetailContent() {
                         </p>
                       )}
                     </div>
+
+                    {briefingCtx.hasEnsaio && (
+                      <div className="p-4 rounded-xl bg-[#FAF7F2]/80 border border-[#E6DFD3] space-y-2 md:col-span-2">
+                        <h4 className="font-semibold text-zinc-900 flex items-center gap-1.5">
+                          <Camera className="w-3.5 h-3.5 text-[#C5A880]" />
+                          Direção do Ensaio ({briefingCtx.sessionLabel})
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                          <p>
+                            <strong className="text-zinc-600">Clima / Estilo:</strong>{' '}
+                            {eventBriefing.session_info?.session_vibe || 'Não informado'}
+                          </p>
+                          <p>
+                            <strong className="text-zinc-600">Troca de roupas:</strong>{' '}
+                            {eventBriefing.session_info
+                              ? eventBriefing.session_info.has_outfit_changes
+                                ? `Sim${
+                                    eventBriefing.session_info.outfit_changes_details
+                                      ? ` (${eventBriefing.session_info.outfit_changes_details})`
+                                      : ''
+                                  }`
+                                : eventBriefing.session_info.outfit_changes_details
+                                  ? `Não (${eventBriefing.session_info.outfit_changes_details})`
+                                  : 'Não informado / 1 look'
+                              : 'Não preenchido'}
+                          </p>
+                          <p>
+                            <strong className="text-zinc-600">Partes do corpo / ângulos a evitar:</strong>{' '}
+                            <span
+                              className={
+                                eventBriefing.session_info?.body_insecurities
+                                  ? 'text-rose-700 font-medium'
+                                  : ''
+                              }
+                            >
+                              {eventBriefing.session_info?.body_insecurities || 'Nenhuma restrição'}
+                            </span>
+                          </p>
+                          <p>
+                            <strong className="text-zinc-600">Poses preferidas:</strong>{' '}
+                            {eventBriefing.session_info?.preferred_poses || 'Não preenchido'}
+                          </p>
+                          <p>
+                            <strong className="text-zinc-600">Poses a evitar:</strong>{' '}
+                            {eventBriefing.session_info?.avoid_poses || 'Nenhuma'}
+                          </p>
+                          <p>
+                            <strong className="text-zinc-600">Objetos / Acessórios / Pet:</strong>{' '}
+                            {eventBriefing.session_info?.props_or_elements || 'Nenhum'}
+                          </p>
+                        </div>
+                        {eventBriefing.session_info?.notes && (
+                          <p className="pt-1 border-t border-[#E6DFD3]/70">
+                            <strong className="text-zinc-600">Observações do ensaio:</strong>{' '}
+                            {eventBriefing.session_info.notes}
+                          </p>
+                        )}
+                      </div>
+                    )}
 
                     {briefingCtx.hasVideo && (
                       <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-200/80 space-y-2 md:col-span-2">

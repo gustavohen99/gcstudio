@@ -15,7 +15,7 @@ import {
   Send,
   Calendar,
 } from 'lucide-react';
-import { BriefingPerson, BriefingRequiredPhoto } from '@/types';
+import { BriefingPerson, BriefingRequiredPhoto, BriefingSessionInfo } from '@/types';
 import { formatDate } from '@/lib/utils';
 
 function BriefingContent() {
@@ -117,6 +117,19 @@ function BriefingContent() {
     }
   );
 
+  const [sessionInfo, setSessionInfo] = useState<BriefingSessionInfo>(
+    briefing?.session_info || {
+      has_outfit_changes: false,
+      outfit_changes_details: '',
+      body_insecurities: '',
+      preferred_poses: '',
+      avoid_poses: '',
+      props_or_elements: '',
+      session_vibe: '',
+      notes: '',
+    }
+  );
+
   // Helper additions
   const [newPersonName, setNewPersonName] = useState('');
   const [newPersonCategory, setNewPersonCategory] = useState(ctx.peopleCategories[0]);
@@ -162,6 +175,7 @@ function BriefingContent() {
       party_info: partyInfo,
       preferences,
       video_info: videoInfo,
+      session_info: sessionInfo,
     });
     setStep(bounded);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -178,6 +192,7 @@ function BriefingContent() {
       party_info: partyInfo,
       preferences,
       video_info: videoInfo,
+      session_info: sessionInfo,
     });
     setSubmitted(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -223,6 +238,11 @@ function BriefingContent() {
               {ctx.hasMakingOf && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200/80 text-amber-800 font-medium">
                   <Sparkles className="w-3 h-3" /> Making Of incluso
+                </span>
+              )}
+              {ctx.hasEnsaio && ctx.profile !== 'ensaio' && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200/80 text-[#8B6E3F] font-medium">
+                  <Camera className="w-3 h-3" /> Inclui {ctx.sessionLabel}
                 </span>
               )}
             </div>
@@ -541,6 +561,187 @@ function BriefingContent() {
                         value={ceremonyInfo.notes}
                         onChange={(e) =>
                           setCeremonyInfo({ ...ceremonyInfo, notes: e.target.value })
+                        }
+                        className="w-full p-3 rounded-xl border border-zinc-200 text-zinc-900 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ETAPA: DIREÇÃO ESPECÍFICA DE ENSAIO */}
+              {currentStepDef.id === 'session' && ctx.hasEnsaio && (
+                <div className="space-y-5 animate-in fade-in duration-200">
+                  <div>
+                    <h3 className="font-serif-brand text-2xl font-medium text-zinc-900">
+                      {currentStepDef.title}
+                    </h3>
+                    <p className="text-xs text-zinc-500 mt-1">{currentStepDef.subtitle}</p>
+                  </div>
+
+                  <div className="space-y-4 text-xs">
+                    {/* Clima do ensaio */}
+                    <div>
+                      <label className="block font-medium text-zinc-700 mb-1.5">
+                        Qual clima / estilo combina mais com esse ensaio?
+                      </label>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {ctx.copy.sessionVibeOptions.map((vibe) => {
+                          const selected = sessionInfo.session_vibe === vibe;
+                          return (
+                            <button
+                              key={vibe}
+                              type="button"
+                              onClick={() =>
+                                setSessionInfo({
+                                  ...sessionInfo,
+                                  session_vibe: selected ? '' : vibe,
+                                })
+                              }
+                              className={`px-3 py-1.5 rounded-xl border font-medium transition-colors cursor-pointer ${
+                                selected
+                                  ? 'bg-zinc-900 text-white border-zinc-900'
+                                  : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:border-zinc-300'
+                              }`}
+                            >
+                              {vibe}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Ou descreva com suas palavras (ex: leve, ao ar livre, clima editorial...)"
+                        value={sessionInfo.session_vibe}
+                        onChange={(e) =>
+                          setSessionInfo({ ...sessionInfo, session_vibe: e.target.value })
+                        }
+                        className="w-full p-3 rounded-xl border border-zinc-200 text-zinc-900 text-sm"
+                      />
+                    </div>
+
+                    {/* Troca de roupas */}
+                    <div className="p-4 rounded-2xl bg-[#FAF7F2]/70 border border-[#EAEAE4] space-y-3">
+                      <span className="font-medium text-zinc-800 block">
+                        {ctx.copy.outfitChangesQuestion}
+                      </span>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { val: true, label: 'Sim, haverá troca de looks' },
+                          { val: false, label: 'Não, apenas 1 look' },
+                        ].map((opt) => (
+                          <button
+                            key={String(opt.val)}
+                            type="button"
+                            onClick={() =>
+                              setSessionInfo({ ...sessionInfo, has_outfit_changes: opt.val })
+                            }
+                            className={`p-2.5 rounded-xl border font-medium text-center transition-colors cursor-pointer ${
+                              sessionInfo.has_outfit_changes === opt.val
+                                ? 'bg-zinc-900 text-white border-zinc-900'
+                                : 'bg-white text-zinc-700 border-zinc-200'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                      <div>
+                        <label className="block font-medium text-zinc-700 mb-1">
+                          {sessionInfo.has_outfit_changes
+                            ? 'Quantas trocas e quais looks/cores vocês pensam em usar?'
+                            : 'Descreva o look planejado (cores/estilo para combinarmos com o cenário)'}
+                        </label>
+                        <input
+                          type="text"
+                          placeholder={ctx.copy.outfitDetailsPlaceholder}
+                          value={sessionInfo.outfit_changes_details}
+                          onChange={(e) =>
+                            setSessionInfo({
+                              ...sessionInfo,
+                              outfit_changes_details: e.target.value,
+                            })
+                          }
+                          className="w-full p-2.5 rounded-xl border border-zinc-200 bg-white text-zinc-900 text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Partes do corpo / ângulos que não gosta */}
+                    <div>
+                      <label className="block font-medium text-zinc-700 mb-1">
+                        Existe alguma parte do corpo, lado do rosto ou ângulo que você NÃO gosta ou prefere evitar nas fotos?
+                      </label>
+                      <textarea
+                        rows={2}
+                        placeholder={ctx.copy.bodyInsecuritiesPlaceholder}
+                        value={sessionInfo.body_insecurities}
+                        onChange={(e) =>
+                          setSessionInfo({ ...sessionInfo, body_insecurities: e.target.value })
+                        }
+                        className="w-full p-3 rounded-xl border border-zinc-200 text-zinc-900 text-sm"
+                      />
+                    </div>
+
+                    {/* Poses preferidas */}
+                    <div>
+                      <label className="block font-medium text-zinc-700 mb-1">
+                        Que tipo de poses e direções vocês mais gostam?
+                      </label>
+                      <textarea
+                        rows={2}
+                        placeholder={ctx.copy.preferredPosesPlaceholder}
+                        value={sessionInfo.preferred_poses}
+                        onChange={(e) =>
+                          setSessionInfo({ ...sessionInfo, preferred_poses: e.target.value })
+                        }
+                        className="w-full p-3 rounded-xl border border-zinc-200 text-zinc-900 text-sm"
+                      />
+                    </div>
+
+                    {/* Poses a evitar */}
+                    <div>
+                      <label className="block font-medium text-zinc-700 mb-1">
+                        Existe alguma pose ou ideia que vocês NÃO querem fazer?
+                      </label>
+                      <input
+                        type="text"
+                        placeholder={ctx.copy.avoidPosesPlaceholder}
+                        value={sessionInfo.avoid_poses}
+                        onChange={(e) =>
+                          setSessionInfo({ ...sessionInfo, avoid_poses: e.target.value })
+                        }
+                        className="w-full p-3 rounded-xl border border-zinc-200 text-zinc-900 text-sm"
+                      />
+                    </div>
+
+                    {/* Acessórios, objetos ou pets */}
+                    <div>
+                      <label className="block font-medium text-zinc-700 mb-1">
+                        Vão levar algum acessório especial, objeto ou pet?
+                      </label>
+                      <input
+                        type="text"
+                        placeholder={ctx.copy.propsPlaceholder}
+                        value={sessionInfo.props_or_elements}
+                        onChange={(e) =>
+                          setSessionInfo({ ...sessionInfo, props_or_elements: e.target.value })
+                        }
+                        className="w-full p-3 rounded-xl border border-zinc-200 text-zinc-900 text-sm"
+                      />
+                    </div>
+
+                    {/* Observações gerais */}
+                    <div>
+                      <label className="block font-medium text-zinc-700 mb-1">
+                        Mais algum detalhe ou observação para deixar o ensaio confortável?
+                      </label>
+                      <textarea
+                        rows={2}
+                        placeholder="Ex: Tenho um pouco de timidez no começo, prefiro que o fotógrafo dê bastante direção..."
+                        value={sessionInfo.notes || ''}
+                        onChange={(e) =>
+                          setSessionInfo({ ...sessionInfo, notes: e.target.value })
                         }
                         className="w-full p-3 rounded-xl border border-zinc-200 text-zinc-900 text-sm"
                       />

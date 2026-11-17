@@ -95,6 +95,11 @@ export default function BriefingsDashboardPage() {
                               Making Of
                             </span>
                           )}
+                          {ctx.hasEnsaio && ctx.profile !== 'ensaio' && (
+                            <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-amber-50 text-[#8B6E3F] border border-amber-200/70">
+                              {ctx.sessionLabel}
+                            </span>
+                          )}
                         </div>
                         <h3 className="text-base font-semibold text-zinc-900 mt-1">
                           {event ? event.name : 'Evento'}

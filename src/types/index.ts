@@ -275,8 +275,21 @@ export interface BriefingData {
     essential_film_moments: string;
     record_testimonials: boolean;
   };
+  // Direção específica para Ensaio (Pré-Wedding, Ensaio Externo, Studio ou Ensaio avulso)
+  session_info?: BriefingSessionInfo;
   created_at: string;
   updated_at: string;
+}
+
+export interface BriefingSessionInfo {
+  has_outfit_changes: boolean;
+  outfit_changes_details: string;
+  body_insecurities: string;
+  preferred_poses: string;
+  avoid_poses: string;
+  props_or_elements: string;
+  session_vibe: string;
+  notes?: string;
 }
 
 export interface ChecklistTask {

@@ -620,6 +620,16 @@ export const useAppStore = () => {
           essential_film_moments: '',
           record_testimonials: true,
         },
+        session_info: {
+          has_outfit_changes: false,
+          outfit_changes_details: '',
+          body_insecurities: '',
+          preferred_poses: '',
+          avoid_poses: '',
+          props_or_elements: '',
+          session_vibe: '',
+          notes: '',
+        },
         created_at: nowIso,
         updated_at: nowIso,
       };

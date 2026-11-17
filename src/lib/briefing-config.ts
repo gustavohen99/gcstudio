@@ -14,6 +14,7 @@ export type BriefingProfile =
 export type BriefingStepId =
   | 'event_info'
   | 'ceremony'
+  | 'session'
   | 'people'
   | 'required_photos'
   | 'special_moments'
@@ -34,6 +35,8 @@ export interface BriefingContext {
   packageInfo: ResolvedPackageInfo | null;
   hasMakingOf: boolean;
   hasVideo: boolean;
+  hasEnsaio: boolean;
+  sessionLabel: string;
   hasCeremony: boolean;
   hasParty: boolean;
   hasSpecialMoments: boolean;
@@ -83,6 +86,13 @@ export interface BriefingContext {
     musicPlaceholder: string;
     essentialFilmPlaceholder: string;
     testimonialsLabel: string;
+    outfitChangesQuestion: string;
+    outfitDetailsPlaceholder: string;
+    bodyInsecuritiesPlaceholder: string;
+    preferredPosesPlaceholder: string;
+    avoidPosesPlaceholder: string;
+    propsPlaceholder: string;
+    sessionVibeOptions: string[];
   };
 }
 
@@ -91,6 +101,9 @@ const VIDEO_KEYWORD_REGEX =
 
 const MAKING_OF_KEYWORD_REGEX =
   /(making\s*of+|bastidores|preparo\s+da\s+(noiva|debutante)|make\s*e\s*cabelo)/i;
+
+const ENSAIO_KEYWORD_REGEX =
+  /\b(ensaio|pr[eé]-?wedding|pre-?wedding|retratos|editorial|book|sess[aã]o\s+(fotogr[aá]fica|externa|em\s+est[uú]dio|em\s+studio))\b/i;
 
 export function mapEventTypeToProfile(type?: EventType | string): BriefingProfile {
   switch (type) {
@@ -279,6 +292,17 @@ export function buildBriefingContext(
 
   const hasVideo = VIDEO_KEYWORD_REGEX.test(combinedText);
   const hasMakingOf = MAKING_OF_KEYWORD_REGEX.test(combinedText);
+  const hasEnsaio =
+    profile === 'ensaio' || ENSAIO_KEYWORD_REGEX.test(combinedText);
+
+  const sessionLabel =
+    combinedText.includes('pré-wedding') || combinedText.includes('pre-wedding')
+      ? 'Pré-Wedding'
+      : combinedText.includes('ensaio') && combinedText.includes('studio')
+        ? 'Ensaio em Studio'
+        : combinedText.includes('ensaio') && combinedText.includes('externo')
+          ? 'Ensaio Externo'
+          : 'Ensaio Fotográfico';
 
   const hasCeremony =
     profile === 'casamento' || profile === '15_anos' || profile === 'formatura';
@@ -323,6 +347,19 @@ export function buildBriefingContext(
             ? 'Entradas, protocolo oficial e homenagens da colação.'
             : 'Entradas, celebrante e dinâmica do cortejo.',
       shortLabel: profile === '15_anos' ? 'Cerimonial' : 'Cerimônia',
+    });
+  }
+
+  if (hasEnsaio) {
+    steps.push({
+      id: 'session',
+      title:
+        profile === 'ensaio'
+          ? 'Direção do Ensaio (Looks, Poses & Conforto)'
+          : `Briefing do ${sessionLabel}`,
+      subtitle:
+        'Trocas de roupa, ângulos preferidos, partes do corpo que prefere cuidar/evitar e estilo das poses.',
+      shortLabel: sessionLabel === 'Pré-Wedding' ? 'Pré-Wedding' : 'Ensaio',
     });
   }
 
@@ -575,6 +612,32 @@ export function buildBriefingContext(
           : profile === 'corporativo'
             ? 'Haverá gravação de depoimentos de participantes, clientes ou diretores?'
             : 'Gostariam que nossa equipe gravasse depoimentos rápidos durante o evento?',
+    outfitChangesQuestion:
+      profile === 'casamento'
+        ? 'Haverá troca de roupas / looks durante o ensaio?'
+        : 'Haverá troca de roupas / looks no ensaio?',
+    outfitDetailsPlaceholder:
+      profile === 'casamento'
+        ? 'Ex: 2 trocas — um look leve/casual para o início e um vestido claro para o pôr do sol'
+        : profile === '15_anos'
+          ? 'Ex: 2 ou 3 looks — um look casual despojado e um look mais elegante / vestido'
+          : 'Ex: 2 trocas — um look social e outro mais descontraído',
+    bodyInsecuritiesPlaceholder:
+      'Ex: Prefiro fotografar mais o lado esquerdo do rosto, evitar ângulos muito de baixo ou foco nos braços/perfil...',
+    preferredPosesPlaceholder:
+      profile === 'casamento'
+        ? 'Ex: Fotos caminhando de mãos dadas, olhares espontâneos, abraços por trás, poses mais românticas...'
+        : 'Ex: Poses espontâneas em movimento, sentados, close no rosto, fotos sorrindo sem olhar para a câmera...',
+    avoidPosesPlaceholder:
+      'Ex: Evitar poses muito posadas/engessadas, fotos saltando ou deitados no chão...',
+    propsPlaceholder:
+      profile === 'casamento'
+        ? 'Ex: Buquê, véu, champanhe, pet (cachorro), carro clássico, violão...'
+        : 'Ex: Balões, livro, pet, instrumento musical, jaqueta jeans, flores...',
+    sessionVibeOptions:
+      profile === 'casamento'
+        ? ['Romântico & Leve', 'Espontâneo & Divertido', 'Editorial / Clássico', 'Intimista ao Pôr do Sol']
+        : ['Leve & Espontâneo', 'Editorial / Moda', 'Divertido & Descontraído', 'Clássico / Elegante'],
   };
 
   return {
@@ -583,6 +646,8 @@ export function buildBriefingContext(
     packageInfo,
     hasMakingOf,
     hasVideo,
+    hasEnsaio,
+    sessionLabel,
     hasCeremony,
     hasParty,
     hasSpecialMoments,
