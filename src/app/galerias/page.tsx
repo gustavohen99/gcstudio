@@ -50,6 +50,7 @@ export default function GalleriesAdminPage() {
     renewGallery,
     addPhotoToGallery,
     updateGallery,
+    deleteGallery,
     updatePhoto,
     deletePhoto,
     setPhotoAsCover,
@@ -60,6 +61,7 @@ export default function GalleriesAdminPage() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+  const [galleryToDelete, setGalleryToDelete] = useState<Gallery | null>(null);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [selectedGalleryId, setSelectedGalleryId] = useState<string>('');
   const [uploading, setUploading] = useState(false);
@@ -360,6 +362,16 @@ export default function GalleriesAdminPage() {
                         title="Configurações da Galeria"
                       >
                         <Settings className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Delete gallery */}
+                      <button
+                        type="button"
+                        onClick={() => setGalleryToDelete(gal)}
+                        className="p-2 rounded-lg bg-white border border-zinc-200 text-zinc-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors cursor-pointer"
+                        title="Excluir Galeria"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
 
@@ -1267,6 +1279,45 @@ export default function GalleriesAdminPage() {
         onClose={() => setQuickCreateOpen(false)}
         defaultTab="gallery"
       />
+
+      <Modal
+        isOpen={Boolean(galleryToDelete)}
+        onClose={() => setGalleryToDelete(null)}
+        title="Excluir Galeria"
+        subtitle="Esta ação não pode ser desfeita"
+        maxWidth="md"
+      >
+        {galleryToDelete && (
+          <div className="space-y-4 text-xs">
+            <p className="text-zinc-600 leading-relaxed">
+              Tem certeza que deseja excluir a galeria{' '}
+              <strong className="text-zinc-900">{galleryToDelete.title}</strong>? Todas as fotos
+              associadas e o link público de acesso serão removidos.
+            </p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setGalleryToDelete(null)}
+                className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-700"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  deleteGallery(galleryToDelete.id);
+                  setGalleryToDelete(null);
+                  toast('Galeria excluída com sucesso.', 'info');
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-medium cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Excluir Galeria</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </AppShell>
   );
 }

@@ -55,6 +55,7 @@ function GalleryEditorContent() {
     galleries,
     photos,
     updateGallery,
+    deleteGallery,
     renewGallery,
     addPhotoToGallery,
     updatePhoto,
@@ -81,6 +82,7 @@ function GalleryEditorContent() {
 
   // Upload Modal State
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
@@ -381,6 +383,16 @@ function GalleryEditorContent() {
                 <span>Visualizar</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </Link>
+
+              {/* Excluir galeria */}
+              <button
+                type="button"
+                onClick={() => setDeleteModalOpen(true)}
+                className="p-2 rounded-lg border border-zinc-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-zinc-400 hover:text-rose-600 transition-colors cursor-pointer shadow-2xs"
+                title="Excluir Galeria"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
 
             {/* Subtexto */}
@@ -1066,7 +1078,15 @@ function GalleryEditorContent() {
               />
             </div>
 
-            <div className="flex justify-end pt-3">
+            <div className="flex items-center justify-between pt-3">
+              <button
+                type="button"
+                onClick={() => setDeleteModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 font-medium transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Excluir Galeria</span>
+              </button>
               <button
                 type="button"
                 onClick={handleSaveSettings}
@@ -1319,6 +1339,45 @@ function GalleryEditorContent() {
                 </label>
               </div>
             )}
+          </div>
+        </Modal>
+
+        {/* Modal Confirmar Exclusão da Galeria */}
+        <Modal
+          isOpen={deleteModalOpen}
+          onClose={() => setDeleteModalOpen(false)}
+          title="Excluir Galeria"
+          subtitle="Esta ação não pode ser desfeita"
+          maxWidth="md"
+        >
+          <div className="space-y-4 text-xs">
+            <p className="text-zinc-600 leading-relaxed">
+              Tem certeza que deseja excluir a galeria{' '}
+              <strong className="text-zinc-900">{gallery.title}</strong>? Todas as{' '}
+              {galleryPhotos.length} fotos associadas e o link público de acesso serão removidos.
+            </p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteModalOpen(false)}
+                className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-700"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  deleteGallery(gallery.id);
+                  setDeleteModalOpen(false);
+                  toast('Galeria excluída com sucesso.', 'info');
+                  router.push('/galerias');
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-medium cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Excluir Galeria</span>
+              </button>
+            </div>
           </div>
         </Modal>
       </div>

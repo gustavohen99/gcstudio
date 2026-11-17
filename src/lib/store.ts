@@ -1402,6 +1402,15 @@ export const useAppStore = () => {
     notifyListeners();
   }, []);
 
+  const deleteGallery = useCallback((id: string) => {
+    globalState = {
+      ...globalState,
+      galleries: globalState.galleries.filter((g) => g.id !== id),
+      photos: globalState.photos.filter((p) => p.gallery_id !== id),
+    };
+    notifyListeners();
+  }, []);
+
   const renewGallery = useCallback((id: string, additionalDays: number = 60) => {
     const gallery = globalState.galleries.find((g) => g.id === id);
     if (!gallery) return;
@@ -2099,6 +2108,7 @@ export const useAppStore = () => {
     submitBriefing,
     addGallery,
     updateGallery,
+    deleteGallery,
     renewGallery,
     addPhotoToGallery,
     updatePhoto,
