@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Cormorant_Garamond, Playfair_Display, Cinzel } from 'next/font/google';
 import './globals.css';
+import { PwaRegistrar } from '@/components/pwa/PwaRegistrar';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -32,13 +33,22 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: 'G&C Studio — Gestão de Clientes, Eventos e Entregas',
   description: 'Sistema interno exclusivo de gestão audiovisual, eventos, clientes e galerias de alta fidelidade para G&C Studio.',
+  applicationName: 'G&C Studio',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'G&C Studio',
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#FBFBF9',
+  themeColor: '#FFFFFF',
 };
 
 export default function RootLayout({
@@ -52,6 +62,7 @@ export default function RootLayout({
       className={`${inter.variable} ${cormorant.variable} ${cinzel.variable} ${playfair.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans bg-[#FBFBF9] text-[#1A1A18] selection:bg-[#C5A880]/20 selection:text-[#7A5B30]">
+        <PwaRegistrar />
         {children}
       </body>
     </html>
