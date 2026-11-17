@@ -1,6 +1,13 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { EventStatus, LeadStatus, PaymentStatus, DeliveryStatus, BriefingStatus } from '@/types';
+import {
+  EventStatus,
+  LeadStatus,
+  PaymentStatus,
+  DeliveryStatus,
+  BriefingStatus,
+  EventItem,
+} from '@/types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -459,4 +466,80 @@ export function getServicesForEventType<
     const cat = (s.category || '').trim().toLowerCase();
     return cat === normType || cat === 'adicionais';
   });
+}
+
+/**
+ * Sugere sessões extras (Casamento Civil, Pré-Wedding, Ensaio Externo, etc.)
+ * com base no pacote escolhido, descrição e adicionais.
+ */
+export function getSuggestedExtraSessions(
+  packageName?: string,
+  packageDescription?: string,
+  addons: Array<{ name: string }> = []
+): string[] {
+  const combined = `${packageName || ''} ${packageDescription || ''} ${addons
+    .map((a) => a.name)
+    .join(' ')}`.toLowerCase();
+
+  const labels: string[] = [];
+  if (combined.includes('pré-wedding') || combined.includes('pre-wedding')) {
+    labels.push('Pré-Wedding');
+  }
+  if (combined.includes('civil')) {
+    labels.push('Casamento no Civil');
+  }
+  if (combined.includes('ensaio') && combined.includes('externo')) {
+    labels.push('Ensaio Externo');
+  } else if (combined.includes('ensaio') && combined.includes('studio')) {
+    labels.push('Ensaio em Studio');
+  }
+  if (
+    addons.some((a) => a.name.toLowerCase().includes('studio')) &&
+    !labels.includes('Ensaio em Studio')
+  ) {
+    labels.push('Ensaio em Studio');
+  }
+  return labels;
+}
+
+export interface AgendaEntry {
+  key: string;
+  isExtra: boolean;
+  sessionLabel?: string;
+  date: string;
+  time: string;
+  location: string;
+  event: EventItem;
+}
+
+/**
+ * Expande cada evento para incluir suas datas extras agendadas (Civil, Pré-Wedding, Ensaio Externo...)
+ * na visualização da agenda.
+ */
+export function buildAgendaEntries(events: EventItem[]): AgendaEntry[] {
+  const entries: AgendaEntry[] = [];
+  events.forEach((evt) => {
+    entries.push({
+      key: evt.id,
+      isExtra: false,
+      date: evt.date,
+      time: evt.time,
+      location: evt.location,
+      event: evt,
+    });
+    (evt.extra_sessions || []).forEach((extra) => {
+      if (extra.date) {
+        entries.push({
+          key: `${evt.id}__${extra.id}`,
+          isExtra: true,
+          sessionLabel: extra.label || 'Sessão Extra',
+          date: extra.date,
+          time: extra.time || '16:00',
+          location: extra.location || evt.location,
+          event: evt,
+        });
+      }
+    });
+  });
+  return entries;
 }

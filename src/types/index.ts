@@ -87,6 +87,14 @@ export interface EventAddon {
   price: number;
 }
 
+export interface EventExtraSession {
+  id: string;
+  label: string;
+  date: string; // YYYY-MM-DD (pode ficar vazio enquanto estiver a definir)
+  time: string; // HH:mm
+  location: string;
+}
+
 export interface EventItem {
   id: string;
   client_id: string;
@@ -104,6 +112,7 @@ export interface EventItem {
   package_id?: string;
   package_description?: string;
   addons?: EventAddon[];
+  extra_sessions?: EventExtraSession[];
   description?: string;
   notes?: string;
   created_at: string;

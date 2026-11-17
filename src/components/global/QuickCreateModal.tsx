@@ -15,7 +15,7 @@ import {
   Check,
   Sparkles,
 } from 'lucide-react';
-import { EventType, LeadStatus } from '@/types';
+import { EventType, LeadStatus, EventExtraSession } from '@/types';
 import {
   formatPhoneInput,
   extractNationalDigits,
@@ -23,7 +23,9 @@ import {
   sortEventsByProximity,
   getPackagesForEventType,
   getServicesForEventType,
+  getSuggestedExtraSessions,
 } from '@/lib/utils';
+import { ExtraSessionsEditor } from '@/components/events/ExtraSessionsEditor';
 
 interface QuickCreateModalProps {
   isOpen: boolean;
@@ -87,6 +89,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
 
   // Event form state
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
+  const [extraSessions, setExtraSessions] = useState<EventExtraSession[]>([]);
   const [eventForm, setEventForm] = useState({
     client_id: '',
     name: '',
@@ -275,10 +278,17 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
         name: s.name,
         price: Number(s.price) || 0,
       })),
+      extra_sessions: extraSessions
+        .filter((s) => s.label.trim() || s.date || s.location.trim())
+        .map((s) => ({
+          ...s,
+          label: s.label.trim() || 'Sessão Extra',
+        })),
       client_name: selectedClient ? selectedClient.name : 'Cliente',
       status: 'confirmado',
     });
     setSelectedAddonIds([]);
+    setExtraSessions([]);
     toast('Evento criado e valores lançados automaticamente no Financeiro!', 'success');
     onClose();
   };
@@ -843,6 +853,17 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                 </div>
               </div>
             )}
+
+            {/* Datas Extras na Agenda (Civil, Pré-Wedding, Ensaio Externo) */}
+            <ExtraSessionsEditor
+              sessions={extraSessions}
+              onChange={setExtraSessions}
+              suggestedLabels={getSuggestedExtraSessions(
+                eventForm.package_name,
+                eventForm.package_description,
+                selectedAddonsList
+              )}
+            />
 
             {/* Descrição do Evento */}
             <div>

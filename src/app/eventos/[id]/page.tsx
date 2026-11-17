@@ -17,7 +17,9 @@ import {
   resolveEventPackage,
   getPackagesForEventType,
   getServicesForEventType,
+  getSuggestedExtraSessions,
 } from '@/lib/utils';
+import { ExtraSessionsEditor } from '@/components/events/ExtraSessionsEditor';
 import {
   Calendar,
   Clock,
@@ -47,7 +49,7 @@ import {
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
-import { EventStatus, DeliveryStatus, EventType, EventAddon } from '@/types';
+import { EventStatus, DeliveryStatus, EventType, EventAddon, EventExtraSession } from '@/types';
 
 function EventDetailContent() {
   const params = useParams();
@@ -116,6 +118,7 @@ function EventDetailContent() {
     package_id: '',
     package_description: '',
     addons: [] as EventAddon[],
+    extra_sessions: [] as EventExtraSession[],
     value: 0,
     deposit_value: 0,
     deposit_paid: true,
@@ -222,6 +225,7 @@ function EventDetailContent() {
       package_id: event.package_id || resolved.id || '',
       package_description: event.package_description || resolved.description,
       addons: event.addons ? [...event.addons] : [],
+      extra_sessions: event.extra_sessions ? event.extra_sessions.map((s) => ({ ...s })) : [],
       value: event.value || 0,
       deposit_value: event.deposit_value ?? (depPayment ? depPayment.amount : 0),
       deposit_paid:
@@ -254,6 +258,9 @@ function EventDetailContent() {
       package_id: configForm.package_id || resolved.id || undefined,
       package_description: configForm.package_description || resolved.description,
       addons: configForm.addons,
+      extra_sessions: configForm.extra_sessions
+        .filter((s) => s.label.trim() || s.date || s.location.trim())
+        .map((s) => ({ ...s, label: s.label.trim() || 'Sessão Extra' })),
       value: Number(configForm.value) || 0,
       deposit_value: Number(configForm.deposit_value) || 0,
       deposit_paid: configForm.deposit_paid,
@@ -468,6 +475,25 @@ function EventDetailContent() {
                     ))}
                   </div>
                 )}
+
+                {event.extra_sessions && event.extra_sessions.length > 0 && (
+                  <div className="pt-1.5 border-t border-amber-200/50 space-y-1 text-[11px] text-zinc-700">
+                    <span className="font-semibold text-[#8B6E3F] block">Datas Extras Agendadas:</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {event.extra_sessions.map((ex) => (
+                        <span
+                          key={ex.id}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-amber-200/70 text-zinc-800"
+                        >
+                          <Calendar className="w-3 h-3 text-[#C5A880]" />
+                          <strong>{ex.label}:</strong>{' '}
+                          {ex.date ? `${formatDate(ex.date)} às ${ex.time || '16:00'}` : 'Data a definir'}
+                          {ex.location ? ` • ${ex.location}` : ''}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -675,6 +701,46 @@ function EventDetailContent() {
                         </div>
                       </div>
                     )}
+                    <div className="pt-2 border-t border-amber-200/50 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
+                          Datas Extras na Agenda (Civil, Pré-Wedding, Ensaio)
+                        </span>
+                        <button
+                          type="button"
+                          onClick={openConfigModal}
+                          className="text-[11px] font-medium text-[#8B6E3F] hover:underline cursor-pointer"
+                        >
+                          {event.extra_sessions && event.extra_sessions.length > 0
+                            ? 'Editar datas / locais'
+                            : '+ Marcar data e local'}
+                        </button>
+                      </div>
+                      {event.extra_sessions && event.extra_sessions.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
+                          {event.extra_sessions.map((ex) => (
+                            <div
+                              key={ex.id}
+                              className="p-2.5 rounded-lg bg-white border border-amber-200/70 text-[11px] space-y-0.5"
+                            >
+                              <span className="font-semibold text-zinc-900 block">{ex.label}</span>
+                              <span className="text-zinc-600 block">
+                                {ex.date
+                                  ? `${formatDate(ex.date)} às ${ex.time || '16:00'}`
+                                  : 'Data a definir'}
+                              </span>
+                              {ex.location && (
+                                <span className="text-zinc-500 block truncate">{ex.location}</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-zinc-500 italic">
+                          Nenhuma data extra marcada para este evento.
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Descrição do Evento */}
@@ -1829,6 +1895,17 @@ function EventDetailContent() {
                 </div>
               );
             })()}
+
+            {/* Datas Extras na Agenda */}
+            <ExtraSessionsEditor
+              sessions={configForm.extra_sessions}
+              onChange={(next) => setConfigForm({ ...configForm, extra_sessions: next })}
+              suggestedLabels={getSuggestedExtraSessions(
+                configForm.package_name,
+                configForm.package_description,
+                configForm.addons
+              )}
+            />
 
             <div className="p-4 rounded-2xl bg-[#FBFBF9] border border-[#EAEAE4] space-y-3">
               <div className="flex items-center justify-between">

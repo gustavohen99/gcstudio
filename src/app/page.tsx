@@ -5,7 +5,14 @@ import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
 import { useAppStore } from '@/lib/store';
 import { useToday } from '@/lib/useToday';
-import { formatCurrency, formatDate, getEventStatusConfig, getPaymentStatusConfig, sortEventsByProximity } from '@/lib/utils';
+import {
+  formatCurrency,
+  formatDate,
+  getEventStatusConfig,
+  getPaymentStatusConfig,
+  sortEventsByProximity,
+  buildAgendaEntries,
+} from '@/lib/utils';
 import {
   Calendar,
   Clock,
@@ -46,9 +53,29 @@ function DashboardContent() {
   };
 
   // Metrics
-  const nextEvents = useMemo(() => {
-    return sortEventsByProximity(events.filter((e) => e.status !== 'cancelado'), today);
-  }, [events, today]);
+  const activeEvents = useMemo(() => {
+    return events.filter((e) => e.status !== 'cancelado');
+  }, [events]);
+
+  const agendaEntries = useMemo(() => {
+    const sorted = sortEventsByProximity(buildAgendaEntries(activeEvents), today);
+    if (!today || agendaView === 'lista') return sorted;
+
+    if (agendaView === 'semana') {
+      const [y, m, d] = today.split('-').map(Number);
+      const endMs = Date.UTC(y, m - 1, d + 7);
+      const endDate = new Date(endMs);
+      const endStr = `${endDate.getUTCFullYear()}-${String(endDate.getUTCMonth() + 1).padStart(
+        2,
+        '0'
+      )}-${String(endDate.getUTCDate()).padStart(2, '0')}`;
+      return sorted.filter((entry) => entry.date >= today && entry.date <= endStr);
+    }
+
+    // agendaView === 'mes'
+    const currentMonth = today.slice(0, 7);
+    return sorted.filter((entry) => entry.date.startsWith(currentMonth));
+  }, [activeEvents, today, agendaView]);
 
   const pendingPayments = useMemo(() => {
     return payments.filter((p) => p.status === 'pendente' || p.status === 'atrasado');
@@ -215,7 +242,7 @@ function DashboardContent() {
             </div>
             <div className="mt-3">
               <div className="text-2xl font-semibold text-zinc-900 font-serif-brand">
-                {nextEvents.length}
+                {activeEvents.length}
               </div>
               <p className="text-[11px] text-zinc-400 mt-0.5">confirmados na temporada</p>
             </div>
@@ -324,13 +351,19 @@ function DashboardContent() {
               </div>
             </div>
 
-            {/* List / Cards of upcoming events */}
-            {nextEvents.length === 0 ? (
+            {/* List / Cards of upcoming events & extra sessions */}
+            {agendaEntries.length === 0 ? (
               <div className="p-12 text-center rounded-2xl bg-white border border-[#EAEAE4] space-y-3">
                 <CalendarDays className="w-10 h-10 text-zinc-300 mx-auto" />
-                <h3 className="text-sm font-medium text-zinc-800">Nenhum evento cadastrado</h3>
+                <h3 className="text-sm font-medium text-zinc-800">
+                  {agendaView === 'lista'
+                    ? 'Nenhum evento cadastrado'
+                    : 'Nenhum evento agendado neste período'}
+                </h3>
                 <p className="text-xs text-zinc-500 max-w-sm mx-auto">
-                  Comece criando seu primeiro evento ou convertendo um lead fechado do CRM.
+                  {agendaView === 'lista'
+                    ? 'Comece criando seu primeiro evento ou convertendo um lead fechado do CRM.'
+                    : 'Altere o filtro acima para "Lista" para ver todos os eventos da agenda.'}
                 </p>
                 <button
                   onClick={() => openQuickWithTab('event')}
@@ -341,29 +374,41 @@ function DashboardContent() {
               </div>
             ) : (
               <div className="space-y-3">
-                {nextEvents.slice(0, 4).map((evt) => {
+                {agendaEntries.slice(0, 6).map((entry) => {
+                  const evt = entry.event;
                   const statusCfg = getEventStatusConfig(evt.status);
                   return (
                     <div
-                      key={evt.id}
-                      className="p-5 rounded-2xl bg-white border border-[#EAEAE4] hover:border-zinc-300 shadow-xs transition-all hover:shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
+                      key={entry.key}
+                      className={`p-5 rounded-2xl border shadow-xs transition-all hover:shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 group ${
+                        entry.isExtra
+                          ? 'bg-amber-50/30 border-amber-200/80 hover:border-[#C5A880]'
+                          : 'bg-white border-[#EAEAE4] hover:border-zinc-300'
+                      }`}
                     >
                       <div className="flex items-start gap-4">
                         {/* Event Date Block */}
                         <div className="w-14 h-14 rounded-2xl bg-[#F7F3ED] border border-[#E8DEC8] flex flex-col items-center justify-center text-center shrink-0">
-                          <span className="text-[10px] uppercase font-semibold text-[#8B6E3F]">
-                            {new Date(evt.date + 'T12:00:00').toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}
+                          <span suppressHydrationWarning className="text-[10px] uppercase font-semibold text-[#8B6E3F]">
+                            {new Date(entry.date + 'T12:00:00')
+                              .toLocaleDateString('pt-BR', { month: 'short' })
+                              .replace('.', '')}
                           </span>
-                          <span className="text-lg font-bold text-zinc-900 leading-none">
-                            {new Date(evt.date + 'T12:00:00').getDate()}
+                          <span suppressHydrationWarning className="text-lg font-bold text-zinc-900 leading-none">
+                            {new Date(entry.date + 'T12:00:00').getDate()}
                           </span>
                         </div>
 
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700">
                               {evt.type}
                             </span>
+                            {entry.isExtra && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-[#8B6E3F] border border-amber-200">
+                                {entry.sessionLabel}
+                              </span>
+                            )}
                             <span
                               className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${statusCfg.bg} ${statusCfg.color}`}
                             >
@@ -372,17 +417,17 @@ function DashboardContent() {
                           </div>
 
                           <h3 className="text-sm font-semibold text-zinc-900 group-hover:text-zinc-700 transition-colors">
-                            {evt.name}
+                            {entry.isExtra ? `${evt.name} — ${entry.sessionLabel}` : evt.name}
                           </h3>
 
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-500 pt-0.5">
                             <span className="flex items-center gap-1">
                               <Clock className="w-3.5 h-3.5 text-zinc-400" />
-                              {evt.time}
+                              {entry.time}
                             </span>
                             <span className="flex items-center gap-1">
                               <MapPin className="w-3.5 h-3.5 text-zinc-400" />
-                              <span className="truncate max-w-[200px]">{evt.location}</span>
+                              <span className="truncate max-w-[200px]">{entry.location}</span>
                             </span>
                           </div>
                         </div>
@@ -391,7 +436,7 @@ function DashboardContent() {
                       {/* Right Action */}
                       <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-3 sm:pt-0 border-zinc-100">
                         <span className="text-xs font-semibold text-zinc-900">
-                          {formatCurrency(evt.value)}
+                          {entry.isExtra ? `Evento: ${formatDate(evt.date)}` : formatCurrency(evt.value)}
                         </span>
                         <Link
                           href={`/eventos/${evt.id}`}
