@@ -214,10 +214,34 @@ const getInitialState = (): AppStoreState => {
   return defaultState;
 };
 
+export type CloudSyncStatus = 'local' | 'syncing' | 'synced' | 'empty_remote' | 'error';
+
+export interface CloudSyncInfo {
+  status: CloudSyncStatus;
+  error?: string;
+  lastSyncedAt?: string;
+}
+
+const SUPABASE_STATE_ROW_ID = 'main';
+const clientTabId =
+  typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : 'tab-' + Math.random().toString(36).slice(2);
+
 let globalState = getInitialState();
 const listeners = new Set<() => void>();
+let cloudSyncInfo: CloudSyncInfo = {
+  status: isSupabaseConfigured() ? 'syncing' : 'local',
+};
+let supabaseSyncInitialized = false;
+let supabasePushTimer: ReturnType<typeof setTimeout> | null = null;
+let lastWriteNonce = '';
 
-const notifyListeners = () => {
+const emitListeners = () => {
+  listeners.forEach((listener) => listener());
+};
+
+const persistLocalOnly = () => {
   if (typeof window !== 'undefined') {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(globalState));
@@ -225,16 +249,152 @@ const notifyListeners = () => {
       console.error('Failed to save to localStorage', e);
     }
   }
-  listeners.forEach((listener) => listener());
+  emitListeners();
+};
+
+const setCloudSyncInfo = (next: CloudSyncInfo) => {
+  cloudSyncInfo = next;
+  emitListeners();
+};
+
+const pushStateToSupabase = async (): Promise<{ ok: boolean; error?: string }> => {
+  if (!supabase) {
+    return { ok: false, error: 'Supabase não configurado.' };
+  }
+  const nonce = `${clientTabId}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  lastWriteNonce = nonce;
+  setCloudSyncInfo({ ...cloudSyncInfo, status: 'syncing', error: undefined });
+
+  const nowIso = new Date().toISOString();
+  const { error } = await supabase.from('studio_state').upsert(
+    {
+      id: SUPABASE_STATE_ROW_ID,
+      data: {
+        ...globalState,
+        _syncMeta: { writeNonce: nonce, tabId: clientTabId, updatedAt: nowIso },
+      },
+      updated_at: nowIso,
+    },
+    { onConflict: 'id' }
+  );
+
+  if (error) {
+    console.error('Supabase sync push error:', error);
+    setCloudSyncInfo({ status: 'error', error: error.message });
+    return { ok: false, error: error.message };
+  }
+
+  setCloudSyncInfo({ status: 'synced', lastSyncedAt: nowIso });
+  return { ok: true };
+};
+
+const pullStateFromSupabase = async (): Promise<{ ok: boolean; empty?: boolean; error?: string }> => {
+  if (!supabase) {
+    return { ok: false, error: 'Supabase não configurado.' };
+  }
+  setCloudSyncInfo({ ...cloudSyncInfo, status: 'syncing', error: undefined });
+
+  const { data: row, error } = await supabase
+    .from('studio_state')
+    .select('data, updated_at')
+    .eq('id', SUPABASE_STATE_ROW_ID)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Supabase sync pull error:', error);
+    setCloudSyncInfo({ status: 'error', error: error.message });
+    return { ok: false, error: error.message };
+  }
+
+  if (!row || !row.data || typeof row.data !== 'object') {
+    setCloudSyncInfo({ status: 'empty_remote' });
+    return { ok: true, empty: true };
+  }
+
+  const remoteData = row.data as Partial<AppStoreState> & {
+    _syncMeta?: { writeNonce?: string; updatedAt?: string };
+  };
+
+  if (remoteData._syncMeta?.writeNonce && remoteData._syncMeta.writeNonce === lastWriteNonce) {
+    setCloudSyncInfo({
+      status: 'synced',
+      lastSyncedAt: row.updated_at || remoteData._syncMeta.updatedAt || new Date().toISOString(),
+    });
+    return { ok: true, empty: false };
+  }
+
+  if (Array.isArray(remoteData.events) || Array.isArray(remoteData.clients)) {
+    const cleanPayload = { ...remoteData };
+    delete cleanPayload._syncMeta;
+    globalState = hydrateStoreState(cleanPayload, createDefaultState());
+    persistLocalOnly();
+    setCloudSyncInfo({
+      status: 'synced',
+      lastSyncedAt: row.updated_at || remoteData._syncMeta?.updatedAt || new Date().toISOString(),
+    });
+    return { ok: true, empty: false };
+  }
+
+  setCloudSyncInfo({ status: 'empty_remote' });
+  return { ok: true, empty: true };
+};
+
+const initSupabaseSync = () => {
+  if (supabaseSyncInitialized || !supabase || typeof window === 'undefined') {
+    return;
+  }
+  supabaseSyncInitialized = true;
+  void pullStateFromSupabase();
+
+  supabase
+    .channel('studio_state_realtime')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'studio_state',
+        filter: `id=eq.${SUPABASE_STATE_ROW_ID}`,
+      },
+      () => {
+        void pullStateFromSupabase();
+      }
+    )
+    .subscribe();
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      void pullStateFromSupabase();
+    }
+  });
+};
+
+const notifyListeners = () => {
+  persistLocalOnly();
+  if (supabase && typeof window !== 'undefined') {
+    if (supabasePushTimer) {
+      clearTimeout(supabasePushTimer);
+    }
+    supabasePushTimer = setTimeout(() => {
+      void pushStateToSupabase();
+    }, 150);
+  }
 };
 
 export const useAppStore = () => {
   const [state, setState] = useState<AppStoreState>(globalState);
+  const [syncInfo, setSyncInfo] = useState<CloudSyncInfo>(cloudSyncInfo);
 
   useEffect(() => {
     // Sync client state with current globalState on mount
     setState(globalState);
-    const handleChange = () => setState({ ...globalState });
+    setSyncInfo(cloudSyncInfo);
+    initSupabaseSync();
+
+    const handleChange = () => {
+      setState({ ...globalState });
+      setSyncInfo({ ...cloudSyncInfo });
+    };
     listeners.add(handleChange);
     return () => {
       listeners.delete(handleChange);
@@ -1749,5 +1909,8 @@ export const useAppStore = () => {
     clearAllUserData,
     exportStoreData,
     importStoreData,
+    cloudSyncInfo: syncInfo,
+    pushToSupabase: pushStateToSupabase,
+    pullFromSupabase: pullStateFromSupabase,
   };
 };

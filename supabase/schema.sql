@@ -391,3 +391,29 @@ CREATE POLICY "Admin full access deliveries" ON deliveries FOR ALL USING (true);
 CREATE POLICY "Admin full access documents" ON documents FOR ALL USING (true);
 CREATE POLICY "Admin full access message_templates" ON message_templates FOR ALL USING (true);
 CREATE POLICY "Admin full access notifications" ON notifications FOR ALL USING (true);
+
+-- 17. ESTADO SINCRONIZADO EM NUVEM (USADO PELO PAINEL EM TEMPO REAL)
+CREATE TABLE IF NOT EXISTS studio_state (
+  id TEXT PRIMARY KEY DEFAULT 'main',
+  data JSONB NOT NULL DEFAULT '{}'::jsonb,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE studio_state ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Studio state full access" ON studio_state;
+CREATE POLICY "Studio state full access"
+  ON studio_state FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND tablename = 'studio_state'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE studio_state;
+  END IF;
+END $$;

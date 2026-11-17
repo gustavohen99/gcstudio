@@ -18,6 +18,8 @@ import {
   Save,
   Download,
   Upload,
+  Copy,
+  RefreshCw,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
@@ -40,6 +42,9 @@ export default function SettingsPage() {
     clearAllUserData,
     exportStoreData,
     importStoreData,
+    cloudSyncInfo,
+    pushToSupabase,
+    pullFromSupabase,
   } = useAppStore();
   const importFileRef = useRef<HTMLInputElement | null>(null);
 
@@ -178,6 +183,58 @@ export default function SettingsPage() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao ler o arquivo de backup.';
       toast(message, 'error');
+    }
+  };
+
+  const SUPABASE_SETUP_SQL = `CREATE TABLE IF NOT EXISTS studio_state (
+  id TEXT PRIMARY KEY DEFAULT 'main',
+  data JSONB NOT NULL DEFAULT '{}'::jsonb,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE studio_state ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Studio state full access" ON studio_state;
+CREATE POLICY "Studio state full access"
+  ON studio_state FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND tablename = 'studio_state'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE studio_state;
+  END IF;
+END $$;`;
+
+  const handleCopySql = () => {
+    navigator.clipboard.writeText(SUPABASE_SETUP_SQL);
+    toast('SQL copiado! Cole no SQL Editor do Supabase e clique em Run.', 'success');
+  };
+
+  const handlePushCloud = async () => {
+    const res = await pushToSupabase();
+    if (res.ok) {
+      toast('Dados locais enviados e salvos no Supabase com sucesso!', 'success');
+    } else {
+      toast(`Erro ao enviar para o Supabase: ${res.error || 'verifique se o SQL foi executado'}`, 'error');
+    }
+  };
+
+  const handlePullCloud = async () => {
+    const res = await pullFromSupabase();
+    if (res.ok) {
+      if (res.empty) {
+        toast('O Supabase ainda está vazio. Clique em "Enviar Dados Locais para o Supabase".', 'info');
+      } else {
+        toast('Dados atualizados a partir do Supabase!', 'success');
+      }
+    } else {
+      toast(`Erro ao buscar do Supabase: ${res.error || 'verifique a conexão'}`, 'error');
     }
   };
 
@@ -576,49 +633,133 @@ export default function SettingsPage() {
           {activeTab === 'supabase' && (
             <div className="p-6 rounded-3xl bg-white border border-[#EAEAE4] shadow-xs max-w-2xl space-y-6 text-xs">
               <div>
-                <h3 className="text-sm font-semibold text-zinc-900">Status do Banco de Dados</h3>
+                <h3 className="text-sm font-semibold text-zinc-900">Sincronização em Nuvem (Supabase)</h3>
                 <p className="text-zinc-500 mt-1">
-                  Integração em nuvem com Supabase (PostgreSQL, Autenticação e Storage).
+                  Mantém todos os eventos, clientes, financeiro, pacotes e galerias iguais entre computador, celular e Vercel em tempo real.
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-200 flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                    <CheckCircle2 className="w-5 h-5" />
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                      !isSupabaseReady
+                        ? 'bg-amber-50 text-amber-600'
+                        : cloudSyncInfo.status === 'error'
+                        ? 'bg-rose-50 text-rose-600'
+                        : 'bg-emerald-50 text-emerald-600'
+                    }`}
+                  >
+                    {cloudSyncInfo.status === 'error' ? (
+                      <AlertTriangle className="w-5 h-5" />
+                    ) : (
+                      <CheckCircle2 className="w-5 h-5" />
+                    )}
                   </div>
                   <div>
-                    <span className="font-semibold text-zinc-900 block">Modo de Operação Ativo</span>
-                    <span className="text-zinc-500">
-                      {isSupabaseReady
-                        ? 'Conectado ao Supabase na nuvem'
-                        : 'Modo Local Integrado com Persistência em Tempo Real'}
+                    <span className="font-semibold text-zinc-900 block">
+                      {!isSupabaseReady
+                        ? 'Modo Local (Sem Supabase conectado ainda)'
+                        : cloudSyncInfo.status === 'synced'
+                        ? 'Conectado e Sincronizado no Supabase'
+                        : cloudSyncInfo.status === 'syncing'
+                        ? 'Sincronizando com o Supabase...'
+                        : cloudSyncInfo.status === 'empty_remote'
+                        ? 'Supabase conectado — aguardando primeiro envio'
+                        : 'Erro ao sincronizar com o Supabase'}
+                    </span>
+                    <span className="text-zinc-500 block mt-0.5">
+                      {!isSupabaseReady
+                        ? 'Os dados ficam salvos apenas no navegador deste aparelho.'
+                        : cloudSyncInfo.status === 'error'
+                        ? cloudSyncInfo.error || 'Execute o SQL abaixo no SQL Editor do Supabase.'
+                        : cloudSyncInfo.status === 'empty_remote'
+                        ? 'Clique em "Enviar Dados Locais para o Supabase" para publicar seus eventos na nuvem.'
+                        : 'Alterações feitas aqui aparecem automaticamente no computador e no celular.'}
                     </span>
                   </div>
                 </div>
 
-                <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[11px]">
-                  100% OPERACIONAL
+                <span
+                  className={`px-3 py-1 rounded-full font-bold text-[11px] self-start sm:self-auto shrink-0 ${
+                    !isSupabaseReady
+                      ? 'bg-amber-100 text-amber-800'
+                      : cloudSyncInfo.status === 'error'
+                      ? 'bg-rose-100 text-rose-800'
+                      : 'bg-emerald-100 text-emerald-800'
+                  }`}
+                >
+                  {!isSupabaseReady
+                    ? 'MODO LOCAL'
+                    : cloudSyncInfo.status === 'error'
+                    ? 'ATENÇÃO'
+                    : 'NUVEM ATIVA'}
                 </span>
               </div>
 
+              {isSupabaseReady && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handlePushCloud}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-medium shadow-xs cursor-pointer"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-[#C5A880]" />
+                    <span>Enviar Dados Locais para o Supabase</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handlePullCloud}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-50 text-zinc-800 border border-zinc-300 font-medium shadow-xs cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-[#A8875B]" />
+                    <span>Buscar Dados do Supabase Agora</span>
+                  </button>
+                </div>
+              )}
+
               <div className="space-y-3 text-zinc-600 leading-relaxed border-t border-zinc-100 pt-4">
                 <p className="font-semibold text-zinc-800">
-                  Como conectar ao seu projeto Supabase na nuvem:
+                  Passo a passo para ativar o Supabase na Vercel e no Localhost:
                 </p>
-                <ol className="list-decimal list-inside space-y-1.5 text-zinc-600">
+                <ol className="list-decimal list-inside space-y-2 text-zinc-600">
                   <li>
                     Crie um projeto gratuito em <strong>supabase.com</strong>.
                   </li>
                   <li>
-                    Abra o <strong>SQL Editor</strong> do Supabase e execute o script gerado em{' '}
-                    <code className="bg-zinc-100 px-1.5 py-0.5 rounded text-zinc-800">
-                      supabase/schema.sql
-                    </code>
-                    .
+                    No menu do Supabase, abra <strong>SQL Editor → New query</strong>, cole o SQL abaixo e clique em <strong>Run</strong>:
+                  </li>
+                </ol>
+
+                <div className="relative rounded-2xl bg-zinc-950 text-zinc-100 p-4 font-mono text-[11px] overflow-x-auto">
+                  <button
+                    type="button"
+                    onClick={handleCopySql}
+                    className="absolute top-3 right-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-100 text-[11px] font-sans font-medium cursor-pointer"
+                  >
+                    <Copy className="w-3 h-3 text-[#C5A880]" />
+                    <span>Copiar SQL</span>
+                  </button>
+                  <pre className="whitespace-pre leading-relaxed pr-24">{SUPABASE_SETUP_SQL}</pre>
+                </div>
+
+                <ol start={3} className="list-decimal list-inside space-y-2 text-zinc-600 pt-1">
+                  <li>
+                    No Supabase, vá em <strong>Project Settings → Data API</strong> (ou <strong>API</strong>) e copie a <strong>Project URL</strong> e a chave pública (<strong>anon / publishable key</strong>).
                   </li>
                   <li>
-                    Copie a URL do projeto e a chave anônima (anon key) no seu arquivo{' '}
+                    Na <strong>Vercel</strong> (<strong>Settings → Environment Variables</strong>), crie{' '}
+                    <code className="bg-zinc-100 px-1.5 py-0.5 rounded text-zinc-800">
+                      NEXT_PUBLIC_SUPABASE_URL
+                    </code>{' '}
+                    e{' '}
+                    <code className="bg-zinc-100 px-1.5 py-0.5 rounded text-zinc-800">
+                      NEXT_PUBLIC_SUPABASE_ANON_KEY
+                    </code>
+                    , salve e faça um <strong>Redeploy</strong>.
+                  </li>
+                  <li>
+                    Se quiser sincronizar também no computador local (<code className="bg-zinc-100 px-1.5 py-0.5 rounded text-zinc-800">localhost:3000</code>), coloque as mesmas duas variáveis no arquivo{' '}
                     <code className="bg-zinc-100 px-1.5 py-0.5 rounded text-zinc-800">
                       .env.local
                     </code>
