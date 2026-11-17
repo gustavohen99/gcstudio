@@ -26,18 +26,23 @@ import {
   ExternalLink,
   Package as PackageIcon,
   ArrowUpDown,
+  Trash2,
 } from 'lucide-react';
 import { QuickCreateModal } from '@/components/global/QuickCreateModal';
-import { EventStatus } from '@/types';
+import { Modal } from '@/components/ui/Modal';
+import { useToast } from '@/components/ui/Toast';
+import { EventItem, EventStatus } from '@/types';
 
 export default function EventsPage() {
-  const { events, packages } = useAppStore();
+  const { events, packages, deleteEvent } = useAppStore();
+  const { toast } = useToast();
   const today = useToday();
   const [viewMode, setViewMode] = useState<'lista' | 'calendario'>('lista');
   const [filterStatus, setFilterStatus] = useState<string>('todos');
   const [sortOrder, setSortOrder] = useState<'proximos' | 'recentes' | 'antigos'>('proximos');
   const [search, setSearch] = useState('');
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<EventItem | null>(null);
 
   const agendaEntries = useMemo(() => {
     const q = search.toLowerCase();
@@ -321,13 +326,25 @@ export default function EventsPage() {
                         )}
                       </div>
 
-                      <Link
-                        href={`/eventos/${event.id}`}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium transition-colors"
-                      >
-                        <span>Gerenciar evento</span>
-                        <ArrowRight className="w-3.5 h-3.5 text-[#C5A880]" />
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        {!entry.isExtra && (
+                          <button
+                            type="button"
+                            onClick={() => setEventToDelete(event)}
+                            className="p-1.5 rounded-xl border border-zinc-200 text-zinc-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="Excluir evento"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        <Link
+                          href={`/eventos/${event.id}`}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium transition-colors"
+                        >
+                          <span>Gerenciar evento</span>
+                          <ArrowRight className="w-3.5 h-3.5 text-[#C5A880]" />
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 );
@@ -395,6 +412,45 @@ export default function EventsPage() {
         onClose={() => setQuickCreateOpen(false)}
         defaultTab="event"
       />
+
+      <Modal
+        isOpen={Boolean(eventToDelete)}
+        onClose={() => setEventToDelete(null)}
+        title="Excluir Evento"
+        subtitle="Esta ação não pode ser desfeita"
+        maxWidth="md"
+      >
+        {eventToDelete && (
+          <div className="space-y-4 text-xs">
+            <p className="text-zinc-600 leading-relaxed">
+              Tem certeza que deseja excluir o evento{' '}
+              <strong className="text-zinc-900">{eventToDelete.name}</strong>? Todos os dados vinculados
+              a ele (briefing, cronograma, checklist, financeiro e galerias) também serão removidos.
+            </p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setEventToDelete(null)}
+                className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-700"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  deleteEvent(eventToDelete.id);
+                  setEventToDelete(null);
+                  toast('Evento excluído com sucesso.', 'info');
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-medium cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Excluir Evento</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </AppShell>
   );
 }

@@ -123,6 +123,7 @@ function EventDetailContent() {
 
   // Timeline add modal
   const [timelineModalOpen, setTimelineModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [timelineForm, setTimelineForm] = useState({
     time: '16:00',
     title: '',
@@ -324,6 +325,13 @@ function EventDetailContent() {
     window.open(getWhatsAppUrl(client.whatsapp, msg), '_blank');
   };
 
+  const handleDeleteEvent = () => {
+    deleteEvent(event.id);
+    setDeleteModalOpen(false);
+    toast('Evento excluído com sucesso.', 'info');
+    router.push('/eventos');
+  };
+
   return (
     <AppShell>
       <div className="space-y-6 animate-in fade-in duration-200">
@@ -432,6 +440,15 @@ function EventDetailContent() {
                   ))}
                 </select>
               </div>
+
+              <button
+                type="button"
+                onClick={() => setDeleteModalOpen(true)}
+                className="p-2 rounded-xl border border-zinc-200 text-zinc-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors cursor-pointer"
+                title="Excluir evento"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
         </div>
@@ -1734,22 +1751,69 @@ function EventDetailContent() {
               />
             </div>
 
+            <div className="flex items-center justify-between gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setConfigModalOpen(false);
+                  setDeleteModalOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 font-medium cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Excluir Evento</span>
+              </button>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setConfigModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-700"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-zinc-900 text-white font-medium"
+                >
+                  Salvar Configuração
+                </button>
+              </div>
+            </div>
+          </form>
+        </Modal>
+
+        {/* Modal Confirmar Exclusão do Evento */}
+        <Modal
+          isOpen={deleteModalOpen}
+          onClose={() => setDeleteModalOpen(false)}
+          title="Excluir Evento"
+          subtitle="Esta ação não pode ser desfeita"
+          maxWidth="md"
+        >
+          <div className="space-y-4 text-xs">
+            <p className="text-zinc-600 leading-relaxed">
+              Tem certeza que deseja excluir o evento{' '}
+              <strong className="text-zinc-900">{event.name}</strong>? Todos os dados vinculados a ele
+              (briefing, cronograma, checklist, lançamentos financeiros e galerias) também serão removidos.
+            </p>
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
-                onClick={() => setConfigModalOpen(false)}
+                onClick={() => setDeleteModalOpen(false)}
                 className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-700"
               >
                 Cancelar
               </button>
               <button
-                type="submit"
-                className="px-5 py-2 rounded-xl bg-zinc-900 text-white font-medium"
+                type="button"
+                onClick={handleDeleteEvent}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-medium cursor-pointer"
               >
-                Salvar Configuração
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Excluir Evento</span>
               </button>
             </div>
-          </form>
+          </div>
         </Modal>
       </div>
     </AppShell>
