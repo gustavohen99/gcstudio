@@ -548,6 +548,7 @@ function ClientProfileContent() {
               <input
                 type="text"
                 required
+                autoComplete="name"
                 value={editForm.name}
                 onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                 className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900"
@@ -571,6 +572,8 @@ function ClientProfileContent() {
                   </span>
                   <input
                     type="tel"
+                    inputMode="tel"
+                    autoComplete="tel-national"
                     required
                     placeholder="(41) 99999-8888"
                     value={editPhoneInput}
@@ -584,6 +587,8 @@ function ClientProfileContent() {
                 <label className="block font-medium text-zinc-700 mb-1">E-mail</label>
                 <input
                   type="email"
+                  inputMode="email"
+                  autoComplete="email"
                   value={editForm.email}
                   onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900"

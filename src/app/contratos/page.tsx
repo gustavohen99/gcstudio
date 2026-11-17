@@ -153,6 +153,8 @@ E por estarem justos e contratados, assinam eletronicamente o presente instrumen
             <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
+              inputMode="search"
+              enterKeyHint="search"
               placeholder="Buscar por cliente, evento ou modelo..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -337,6 +339,7 @@ E por estarem justos e contratados, assinam eletronicamente o presente instrumen
               </label>
               <input
                 type="url"
+                inputMode="url"
                 placeholder="https://app.autentique.com.br/documento/..."
                 value={form.external_url}
                 onChange={(e) => setForm({ ...form, external_url: e.target.value })}

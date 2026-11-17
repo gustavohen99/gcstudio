@@ -193,6 +193,8 @@ export default function FinancePage() {
             <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
+              inputMode="search"
+              enterKeyHint="search"
               placeholder="Buscar por cliente, evento ou descrição..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -368,6 +370,9 @@ export default function FinancePage() {
                 <label className="block font-medium text-zinc-700 mb-1">Valor (R$) *</label>
                 <input
                   type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
                   required
                   value={form.amount}
                   onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}

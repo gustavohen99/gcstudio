@@ -101,6 +101,8 @@ export default function LoginPage() {
                 <Mail className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="email"
+                  inputMode="email"
+                  autoComplete="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -125,6 +127,7 @@ export default function LoginPage() {
                 <Lock className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="password"
+                  autoComplete="current-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -179,6 +182,8 @@ export default function LoginPage() {
                     </p>
                     <input
                       type="email"
+                      inputMode="email"
+                      autoComplete="email"
                       required
                       placeholder="admin@gcstudio.com.br"
                       value={forgotEmail}

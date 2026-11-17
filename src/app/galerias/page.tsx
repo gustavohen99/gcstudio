@@ -259,6 +259,8 @@ export default function GalleriesAdminPage() {
           <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
+            inputMode="search"
+            enterKeyHint="search"
             placeholder="Buscar por título ou cliente..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -497,6 +499,7 @@ export default function GalleriesAdminPage() {
                   </label>
                   <input
                     type="text"
+                    inputMode="url"
                     value={settingsCoverUrl}
                     onChange={(e) => setSettingsCoverUrl(e.target.value)}
                     placeholder="https://images.unsplash.com/..."
@@ -801,6 +804,7 @@ export default function GalleriesAdminPage() {
                       </label>
                       <input
                         type="number"
+                        inputMode="numeric"
                         min="1"
                         max="500"
                         value={settingsSelectionMax}
@@ -1217,6 +1221,7 @@ export default function GalleriesAdminPage() {
               <label className="block font-medium text-zinc-700 mb-1">Link do Vídeo (YouTube, Vimeo ou MP4)</label>
               <input
                 type="text"
+                inputMode="url"
                 value={videoInputUrl}
                 onChange={(e) => setVideoInputUrl(e.target.value)}
                 placeholder="Ex: https://vimeo.com/... ou https://youtu.be/..."

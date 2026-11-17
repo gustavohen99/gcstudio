@@ -407,7 +407,9 @@ END $$;`;
                   <div>
                     <label className="block font-medium text-zinc-700 mb-1">Telefone</label>
                     <input
-                      type="text"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
                       value={studioForm.phone}
                       onChange={(e) => setStudioForm({ ...studioForm, phone: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900"
@@ -416,7 +418,9 @@ END $$;`;
                   <div>
                     <label className="block font-medium text-zinc-700 mb-1">WhatsApp Oficial</label>
                     <input
-                      type="text"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
                       value={studioForm.whatsapp}
                       onChange={(e) => setStudioForm({ ...studioForm, whatsapp: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900"
@@ -429,6 +433,8 @@ END $$;`;
                     <label className="block font-medium text-zinc-700 mb-1">E-mail</label>
                     <input
                       type="email"
+                      inputMode="email"
+                      autoComplete="email"
                       value={studioForm.email}
                       onChange={(e) => setStudioForm({ ...studioForm, email: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900"
@@ -942,7 +948,9 @@ END $$;`;
                 <label className="block font-medium text-zinc-700 mb-1">Preço (R$) *</label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   min="0"
+                  step="0.01"
                   required
                   value={pkgForm.price}
                   onChange={(e) => setPkgForm({ ...pkgForm, price: Number(e.target.value) })}
@@ -1036,7 +1044,9 @@ END $$;`;
                 <label className="block font-medium text-zinc-700 mb-1">Preço (R$) *</label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   min="0"
+                  step="0.01"
                   required
                   value={srvForm.price}
                   onChange={(e) => setSrvForm({ ...srvForm, price: Number(e.target.value) })}

@@ -94,6 +94,8 @@ export default function QuotesPage() {
             <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
+              inputMode="search"
+              enterKeyHint="search"
               placeholder="Buscar por cliente ou pacote..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

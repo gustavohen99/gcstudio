@@ -1054,6 +1054,7 @@ function GalleryEditorContent() {
                   <span className="font-medium text-zinc-700">Limite de fotos para o álbum:</span>
                   <input
                     type="number"
+                    inputMode="numeric"
                     min="1"
                     max="500"
                     value={settingsSelectionMax}
@@ -1126,6 +1127,7 @@ function GalleryEditorContent() {
                 <label className="font-medium text-zinc-700 block mb-1">URL da Imagem de Capa:</label>
                 <input
                   type="text"
+                  inputMode="url"
                   value={settingsCoverUrl}
                   onChange={(e) => setSettingsCoverUrl(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-zinc-300 text-zinc-900 text-xs focus:outline-hidden focus:border-blue-600"

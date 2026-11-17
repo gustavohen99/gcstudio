@@ -1838,7 +1838,9 @@ function EventDetailContent() {
                   <label className="block font-medium text-zinc-700 mb-1">Valor Total (R$)</label>
                   <input
                     type="number"
+                    inputMode="decimal"
                     min="0"
+                    step="0.01"
                     value={configForm.value}
                     onChange={(e) => setConfigForm({ ...configForm, value: Number(e.target.value) })}
                     className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-zinc-900"
@@ -1848,7 +1850,9 @@ function EventDetailContent() {
                   <label className="block font-medium text-zinc-700 mb-1">Valor de Entrada (R$)</label>
                   <input
                     type="number"
+                    inputMode="decimal"
                     min="0"
+                    step="0.01"
                     value={configForm.deposit_value}
                     onChange={(e) =>
                       setConfigForm({ ...configForm, deposit_value: Number(e.target.value) })

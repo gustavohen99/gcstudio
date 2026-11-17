@@ -987,7 +987,8 @@ function PortfolioAdminContent() {
               <div>
                 <label className="block text-zinc-700 font-medium mb-1.5">WhatsApp (apenas números com DDD)</label>
                 <input
-                  type="text"
+                  type="tel"
+                  inputMode="numeric"
                   value={socialsForm.whatsapp}
                   onChange={(e) => setSocialsForm({ ...socialsForm, whatsapp: e.target.value })}
                   className="w-full p-3 rounded-xl border border-zinc-200 text-zinc-900"
@@ -1010,6 +1011,8 @@ function PortfolioAdminContent() {
                 <label className="block text-zinc-700 font-medium mb-1.5">E-mail de Contato Público</label>
                 <input
                   type="email"
+                  inputMode="email"
+                  autoComplete="email"
                   value={socialsForm.email}
                   onChange={(e) => setSocialsForm({ ...socialsForm, email: e.target.value })}
                   className="w-full p-3 rounded-xl border border-zinc-200 text-zinc-900"

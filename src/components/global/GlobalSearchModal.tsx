@@ -124,6 +124,8 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
           <Search className="w-5 h-5 text-zinc-400 shrink-0" />
           <input
             type="text"
+            inputMode="search"
+            enterKeyHint="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Digite para buscar clientes, eventos, orçamentos, galerias..."

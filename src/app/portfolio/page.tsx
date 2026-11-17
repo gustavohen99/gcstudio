@@ -668,6 +668,7 @@ function PortfolioLandingContent() {
                   <input
                     type="text"
                     required
+                    autoComplete="name"
                     placeholder="Nome completo ou casal"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -677,7 +678,9 @@ function PortfolioLandingContent() {
                 <div>
                   <label className="block text-zinc-300 mb-1">WhatsApp com DDD *</label>
                   <input
-                    type="text"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
                     required
                     placeholder="(41) 99999-9999"
                     value={form.whatsapp}

@@ -493,6 +493,8 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                   </span>
                   <input
                     type="tel"
+                    inputMode="tel"
+                    autoComplete="tel-national"
                     required
                     placeholder="(41) 99999-8888"
                     value={clientPhoneInput}
@@ -572,6 +574,8 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                   </span>
                   <input
                     type="tel"
+                    inputMode="tel"
+                    autoComplete="tel-national"
                     required
                     placeholder="(41) 99999-8888"
                     value={leadPhoneInput}
@@ -611,6 +615,9 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                 <label className="block font-medium text-zinc-700 mb-1">Valor Estimado (R$)</label>
                 <input
                   type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
                   value={leadForm.estimated_value}
                   onChange={(e) => setLeadForm({ ...leadForm, estimated_value: Number(e.target.value) })}
                   className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900 focus:outline-hidden focus:border-[#C5A880]"
@@ -923,7 +930,9 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                   <label className="block font-medium text-zinc-700 mb-1">Valor Total do Evento (R$)</label>
                   <input
                     type="number"
+                    inputMode="decimal"
                     min="0"
+                    step="0.01"
                     value={eventForm.value}
                     onChange={(e) => setEventForm({ ...eventForm, value: Number(e.target.value) })}
                     className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-zinc-900 focus:outline-hidden focus:border-[#C5A880]"
@@ -933,7 +942,9 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                   <label className="block font-medium text-zinc-700 mb-1">Valor de Entrada / Sinal (R$)</label>
                   <input
                     type="number"
+                    inputMode="decimal"
                     min="0"
+                    step="0.01"
                     value={eventForm.deposit_value}
                     onChange={(e) => setEventForm({ ...eventForm, deposit_value: Number(e.target.value) })}
                     className="w-full px-3 py-2 rounded-xl border border-zinc-200 bg-white text-zinc-900 focus:outline-hidden focus:border-[#C5A880]"
@@ -1045,6 +1056,9 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                 <label className="block font-medium text-zinc-700 mb-1">Valor Total (R$)</label>
                 <input
                   type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
                   value={quoteForm.total_value}
                   onChange={(e) => setQuoteForm({ ...quoteForm, total_value: Number(e.target.value) })}
                   className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900 focus:outline-hidden focus:border-[#C5A880]"
@@ -1054,6 +1068,9 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                 <label className="block font-medium text-zinc-700 mb-1">Entrada / Sinal (R$)</label>
                 <input
                   type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
                   value={quoteForm.deposit_value}
                   onChange={(e) => setQuoteForm({ ...quoteForm, deposit_value: Number(e.target.value) })}
                   className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900 focus:outline-hidden focus:border-[#C5A880]"
@@ -1063,6 +1080,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                 <label className="block font-medium text-zinc-700 mb-1">Número de Parcelas</label>
                 <input
                   type="number"
+                  inputMode="numeric"
                   min="1"
                   max="12"
                   value={quoteForm.installments_count}
@@ -1148,6 +1166,8 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                 <label className="block font-medium text-zinc-700 mb-1">Limite de Fotos para Álbum</label>
                 <input
                   type="number"
+                  inputMode="numeric"
+                  min="1"
                   value={galleryForm.selection_max}
                   onChange={(e) => setGalleryForm({ ...galleryForm, selection_max: Number(e.target.value) })}
                   className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900 focus:outline-hidden focus:border-[#C5A880]"
@@ -1159,6 +1179,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
               <label className="block font-medium text-zinc-700 mb-1">Foto de Capa (URL)</label>
               <input
                 type="text"
+                inputMode="url"
                 value={galleryForm.cover_url}
                 onChange={(e) => setGalleryForm({ ...galleryForm, cover_url: e.target.value })}
                 className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900 focus:outline-hidden focus:border-[#C5A880]"
@@ -1171,6 +1192,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
               </label>
               <input
                 type="text"
+                inputMode="url"
                 placeholder="Ex: https://vimeo.com/... ou https://youtu.be/..."
                 value={galleryForm.video_url}
                 onChange={(e) => setGalleryForm({ ...galleryForm, video_url: e.target.value })}
