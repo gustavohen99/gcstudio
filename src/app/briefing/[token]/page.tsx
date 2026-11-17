@@ -1114,7 +1114,7 @@ function BriefingContent() {
                       <label className="block font-medium text-zinc-700 mb-1">
                         Estilo predominante preferido:
                       </label>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         {[
                           { id: 'espontaneas', label: '100% Espontâneo' },
                           { id: 'misto', label: 'Equilibrado (Misto)' },

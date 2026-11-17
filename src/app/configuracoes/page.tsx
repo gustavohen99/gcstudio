@@ -378,11 +378,11 @@ END $$;`;
         <div>
           {/* 1. STUDIO */}
           {activeTab === 'studio' && (
-            <div className="p-6 rounded-3xl bg-white border border-[#EAEAE4] shadow-xs max-w-2xl">
+            <div className="p-4 sm:p-6 rounded-3xl bg-white border border-[#EAEAE4] shadow-xs max-w-2xl">
               <form onSubmit={handleSaveStudio} className="space-y-4 text-xs">
                 <h3 className="text-sm font-semibold text-zinc-900">Identidade do Estúdio</h3>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block font-medium text-zinc-700 mb-1">Nome da Empresa</label>
                     <input
@@ -403,7 +403,7 @@ END $$;`;
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block font-medium text-zinc-700 mb-1">Telefone</label>
                     <input
@@ -428,7 +428,7 @@ END $$;`;
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block font-medium text-zinc-700 mb-1">E-mail</label>
                     <input

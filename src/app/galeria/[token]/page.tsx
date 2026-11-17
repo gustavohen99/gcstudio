@@ -96,6 +96,7 @@ function GalleryContent() {
 
   // Lightbox
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const touchStartRef = React.useRef<{ x: number; y: number } | null>(null);
 
   // Selection Completion Alert
   const [justCompleted, setJustCompleted] = useState(false);
@@ -891,49 +892,76 @@ function GalleryContent() {
       {/* 7. FULLSCREEN LIGHTBOX MODAL                             */}
       {/* ======================================================== */}
       {activePhoto && lightboxIndex !== null && (
-        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col justify-between p-4 sm:p-6 animate-in fade-in duration-150 select-none">
+        <div
+          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col justify-between p-3 sm:p-6 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] animate-in fade-in duration-150 select-none"
+          onTouchStart={(e) => {
+            if (e.touches.length !== 1) return;
+            touchStartRef.current = {
+              x: e.touches[0].clientX,
+              y: e.touches[0].clientY,
+            };
+          }}
+          onTouchEnd={(e) => {
+            if (!touchStartRef.current || e.changedTouches.length !== 1) return;
+            const dx = e.changedTouches[0].clientX - touchStartRef.current.x;
+            const dy = e.changedTouches[0].clientY - touchStartRef.current.y;
+            touchStartRef.current = null;
+            if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+              if (dx < 0) {
+                setLightboxIndex((prev) =>
+                  prev !== null && prev < visiblePhotos.length - 1 ? prev + 1 : 0
+                );
+              } else {
+                setLightboxIndex((prev) =>
+                  prev !== null && prev > 0 ? prev - 1 : visiblePhotos.length - 1
+                );
+              }
+            }
+          }}
+        >
           {/* Top Bar */}
-          <div className="flex items-center justify-between text-xs text-zinc-400">
-            <span className="font-mono">
+          <div className="flex items-center justify-between gap-2 text-xs text-zinc-400">
+            <span className="font-mono tabular-nums">
               Foto {lightboxIndex + 1} de {visiblePhotos.length}
             </span>
 
-            <div className="flex items-center gap-3">
-              {/* Favorite (conditional) */}
-              {gallery.favorites_enabled !== false && (
-                <button
-                  onClick={() => togglePhotoFavorite(activePhoto.id)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-white hover:bg-zinc-800 transition-colors cursor-pointer"
-                >
-                  <Heart
-                    className={`w-4 h-4 ${
-                      activePhoto.is_favorite ? 'text-rose-500 fill-rose-500' : 'text-zinc-400'
-                    }`}
-                  />
-                  <span>Favoritar</span>
-                </button>
-              )}
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Favorite & Selection (Desktop in top bar; Mobile moves to bottom thumb bar) */}
+              <div className="hidden sm:flex items-center gap-3">
+                {gallery.favorites_enabled !== false && (
+                  <button
+                    onClick={() => togglePhotoFavorite(activePhoto.id)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+                  >
+                    <Heart
+                      className={`w-4 h-4 ${
+                        activePhoto.is_favorite ? 'text-rose-500 fill-rose-500' : 'text-zinc-400'
+                      }`}
+                    />
+                    <span>Favoritar</span>
+                  </button>
+                )}
 
-              {/* Select for album (conditional) */}
-              {gallery.selection_enabled !== false && (
-                <button
-                  onClick={() => togglePhotoSelection(activePhoto.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors cursor-pointer ${
-                    activePhoto.is_selected
-                      ? 'bg-[#C5A880] text-zinc-950 font-semibold'
-                      : 'bg-zinc-900 border border-zinc-800 text-white hover:bg-zinc-800'
-                  }`}
-                >
-                  <Check className="w-4 h-4" />
-                  <span>{activePhoto.is_selected ? 'Selecionada' : 'Selecionar para Álbum'}</span>
-                </button>
-              )}
+                {gallery.selection_enabled !== false && (
+                  <button
+                    onClick={() => togglePhotoSelection(activePhoto.id)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors cursor-pointer ${
+                      activePhoto.is_selected
+                        ? 'bg-[#C5A880] text-zinc-950 font-semibold'
+                        : 'bg-zinc-900 border border-zinc-800 text-white hover:bg-zinc-800'
+                    }`}
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>{activePhoto.is_selected ? 'Selecionada' : 'Selecionar para Álbum'}</span>
+                  </button>
+                )}
+              </div>
 
               {/* Individual Download */}
               {gallery.download_enabled !== false && (
                 <button
                   onClick={() => handleSinglePhotoDownload(activePhoto)}
-                  className="p-2 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white"
+                  className="p-2 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white cursor-pointer"
                   title="Baixar foto"
                 >
                   <Download className="w-4 h-4" />
@@ -943,7 +971,7 @@ function GalleryContent() {
               {/* Close */}
               <button
                 onClick={() => setLightboxIndex(null)}
-                className="p-2 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white cursor-pointer"
+                className="p-2 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white cursor-pointer"
                 title="Fechar (ESC)"
               >
                 <X className="w-4 h-4" />
@@ -951,24 +979,24 @@ function GalleryContent() {
             </div>
           </div>
 
-          {/* Center Image with Previous/Next Controls */}
-          <div className="relative flex-1 flex items-center justify-center p-2 sm:p-6 overflow-hidden">
+          {/* Center Image with Previous/Next Controls + Touch Swipe */}
+          <div className="relative flex-1 flex items-center justify-center p-1 sm:p-6 overflow-hidden">
             <button
               onClick={() =>
                 setLightboxIndex((prev) =>
                   prev !== null && prev > 0 ? prev - 1 : visiblePhotos.length - 1
                 )
               }
-              className="absolute left-2 sm:left-6 p-3 rounded-full bg-black/60 hover:bg-black text-white backdrop-blur-md transition-colors z-10 cursor-pointer"
+              className="absolute left-1.5 sm:left-6 p-2 sm:p-3 rounded-full bg-black/50 hover:bg-black text-white/90 backdrop-blur-md transition-colors z-10 cursor-pointer"
               title="Foto anterior (Seta Esquerda)"
             >
-              <ChevronLeft className="w-6 h-6" />
+              <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
 
             <img
               src={activePhoto.url}
               alt={activePhoto.title || 'Foto em alta resolução'}
-              className="max-h-[82vh] max-w-full object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-200"
+              className="max-h-[70dvh] sm:max-h-[82vh] max-w-full object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-200 pointer-events-none"
             />
 
             <button
@@ -977,19 +1005,57 @@ function GalleryContent() {
                   prev !== null && prev < visiblePhotos.length - 1 ? prev + 1 : 0
                 )
               }
-              className="absolute right-2 sm:right-6 p-3 rounded-full bg-black/60 hover:bg-black text-white backdrop-blur-md transition-colors z-10 cursor-pointer"
+              className="absolute right-1.5 sm:right-6 p-2 sm:p-3 rounded-full bg-black/50 hover:bg-black text-white/90 backdrop-blur-md transition-colors z-10 cursor-pointer"
               title="Próxima foto (Seta Direita)"
             >
-              <ChevronRight className="w-6 h-6" />
+              <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
 
-          {/* Bottom Caption */}
-          <div className="text-center text-xs text-zinc-400">
-            <p className="font-medium text-white">{activePhoto.title}</p>
-            <p className="text-[11px] text-zinc-500 font-mono mt-0.5">
-              {activePhoto.filename} {activePhoto.folder ? `• Pasta: ${activePhoto.folder}` : ''}
-            </p>
+          {/* Bottom Caption + Mobile Thumb Bar */}
+          <div className="space-y-3 text-center text-xs text-zinc-400">
+            <div>
+              <p className="font-medium text-white truncate">{activePhoto.title}</p>
+              <p className="text-[11px] text-zinc-500 font-mono mt-0.5 truncate">
+                {activePhoto.filename} {activePhoto.folder ? `• Pasta: ${activePhoto.folder}` : ''}
+              </p>
+            </div>
+
+            {(gallery.favorites_enabled !== false || gallery.selection_enabled !== false) && (
+              <div className="sm:hidden flex items-center justify-center gap-2 pt-1">
+                {gallery.favorites_enabled !== false && (
+                  <button
+                    onClick={() => togglePhotoFavorite(activePhoto.id)}
+                    className={`flex-1 max-w-[160px] flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-full border text-xs font-medium transition-colors cursor-pointer ${
+                      activePhoto.is_favorite
+                        ? 'bg-rose-500/15 border-rose-500/50 text-rose-300'
+                        : 'bg-zinc-900 border-zinc-800 text-white'
+                    }`}
+                  >
+                    <Heart
+                      className={`w-4 h-4 ${
+                        activePhoto.is_favorite ? 'text-rose-500 fill-rose-500' : 'text-zinc-400'
+                      }`}
+                    />
+                    <span>{activePhoto.is_favorite ? 'Favorita' : 'Favoritar'}</span>
+                  </button>
+                )}
+
+                {gallery.selection_enabled !== false && (
+                  <button
+                    onClick={() => togglePhotoSelection(activePhoto.id)}
+                    className={`flex-1 max-w-[180px] flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
+                      activePhoto.is_selected
+                        ? 'bg-[#C5A880] text-zinc-950 font-semibold'
+                        : 'bg-zinc-900 border border-zinc-800 text-white'
+                    }`}
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>{activePhoto.is_selected ? 'Selecionada' : 'Selecionar'}</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
