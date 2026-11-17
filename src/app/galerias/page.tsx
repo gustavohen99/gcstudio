@@ -512,7 +512,7 @@ export default function GalleriesAdminPage() {
                     <label className="block font-medium text-zinc-700 mb-2">
                       Ou escolha uma das fotos já presentes nesta galeria:
                     </label>
-                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                       {photos
                         .filter((p) => p.gallery_id === activeSettingsGallery.id)
                         .map((photo) => {
@@ -933,7 +933,7 @@ export default function GalleriesAdminPage() {
             {/* Top Bar with Filter & Upload */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-zinc-50 rounded-2xl border border-zinc-200">
               {/* Folder Filter */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
                 <span className="text-zinc-500 font-medium shrink-0">Filtrar:</span>
                 <button
                   type="button"

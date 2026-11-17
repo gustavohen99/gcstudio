@@ -426,7 +426,7 @@ function ClientProfileContent() {
                 clientQuotes.map((q) => (
                   <div
                     key={q.id}
-                    className="p-5 bg-white rounded-2xl border border-[#EAEAE4] flex items-center justify-between"
+                    className="p-4 sm:p-5 bg-white rounded-2xl border border-[#EAEAE4] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
                   >
                     <div>
                       <h4 className="text-sm font-semibold text-zinc-900">
@@ -462,7 +462,7 @@ function ClientProfileContent() {
                   return (
                     <div
                       key={p.id}
-                      className="p-4 bg-white rounded-2xl border border-[#EAEAE4] flex items-center justify-between text-xs"
+                      className="p-4 bg-white rounded-2xl border border-[#EAEAE4] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs"
                     >
                       <div>
                         <span className="font-semibold text-zinc-900">{p.description}</span>
@@ -496,7 +496,7 @@ function ClientProfileContent() {
                 clientGalleries.map((g) => (
                   <div
                     key={g.id}
-                    className="p-5 bg-white rounded-2xl border border-[#EAEAE4] flex items-center justify-between"
+                    className="p-4 sm:p-5 bg-white rounded-2xl border border-[#EAEAE4] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
                   >
                     <div>
                       <h4 className="text-sm font-semibold text-zinc-900">{g.title}</h4>

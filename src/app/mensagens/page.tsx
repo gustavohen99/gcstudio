@@ -155,7 +155,7 @@ export default function MessageTemplatesPage() {
               Biblioteca de Modelos ({messageTemplates.length})
             </h3>
 
-            <div className="space-y-2 max-h-[640px] overflow-y-auto pr-1">
+            <div className="space-y-2 max-h-56 lg:max-h-[640px] overflow-y-auto no-scrollbar pr-1">
               {messageTemplates.map((tpl) => {
                 const isSelected = selectedTemplate?.id === tpl.id;
                 return (
@@ -196,7 +196,7 @@ export default function MessageTemplatesPage() {
 
           {/* Live Editor & WhatsApp Dispatcher */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="p-6 rounded-3xl bg-white border border-[#EAEAE4] shadow-xs space-y-5">
+            <div className="p-4 sm:p-6 rounded-3xl bg-white border border-[#EAEAE4] shadow-xs space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-zinc-100">
                 <div>
                   <h3 className="text-sm font-semibold text-zinc-900">
@@ -208,12 +208,12 @@ export default function MessageTemplatesPage() {
                 </div>
 
                 {/* Client Selector for auto-variables */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
                   <span className="text-xs text-zinc-500 whitespace-nowrap">Preencher com:</span>
                   <select
                     value={selectedClientId}
                     onChange={(e) => setSelectedClientId(e.target.value)}
-                    className="text-xs px-3 py-1.5 rounded-xl border border-zinc-200 bg-white font-medium text-zinc-800 max-w-[200px]"
+                    className="text-xs px-3 py-1.5 rounded-xl border border-zinc-200 bg-white font-medium text-zinc-800 flex-1 sm:flex-none w-full sm:max-w-[200px]"
                   >
                     <option value="">Selecione um cliente...</option>
                     {clients.map((c) => (

@@ -473,7 +473,7 @@ END $$;`;
             <div className="space-y-6">
               {/* Pacotes */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <h3 className="text-sm font-semibold text-zinc-900">Pacotes Oficiais</h3>
                     <p className="text-xs text-zinc-500">
@@ -482,7 +482,7 @@ END $$;`;
                   </div>
                   <button
                     onClick={openCreatePackageModal}
-                    className="px-3.5 py-1.5 rounded-xl bg-zinc-900 text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer"
+                    className="self-start sm:self-auto px-3.5 py-1.5 rounded-xl bg-zinc-900 text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5 text-[#C5A880]" />
                     <span>+ Novo Pacote</span>
@@ -546,7 +546,7 @@ END $$;`;
 
               {/* Serviços Adicionais */}
               <div className="space-y-3 pt-4 border-t border-zinc-200">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <h3 className="text-sm font-semibold text-zinc-900">Serviços Adicionais</h3>
                     <p className="text-xs text-zinc-500">
@@ -555,7 +555,7 @@ END $$;`;
                   </div>
                   <button
                     onClick={openCreateServiceModal}
-                    className="px-3.5 py-1.5 rounded-xl bg-zinc-900 text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer"
+                    className="self-start sm:self-auto px-3.5 py-1.5 rounded-xl bg-zinc-900 text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5 text-[#C5A880]" />
                     <span>+ Novo Serviço</span>
@@ -615,7 +615,7 @@ END $$;`;
 
           {/* 3. BANCÁRIO */}
           {activeTab === 'bancario' && (
-            <div className="p-6 rounded-3xl bg-white border border-[#EAEAE4] shadow-xs max-w-xl">
+            <div className="p-4 sm:p-6 rounded-3xl bg-white border border-[#EAEAE4] shadow-xs max-w-xl">
               <form onSubmit={handleSaveBank} className="space-y-4 text-xs">
                 <h3 className="text-sm font-semibold text-zinc-900">Dados de Pagamento & PIX</h3>
                 <p className="text-zinc-500 text-xs">
@@ -642,7 +642,7 @@ END $$;`;
                   />
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="block font-medium text-zinc-700 mb-1">Banco</label>
                     <input

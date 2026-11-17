@@ -363,7 +363,7 @@ function GalleryEditorContent() {
           </div>
 
           <div className="flex flex-col sm:items-end gap-1.5">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {/* Compartilhar link */}
               <button
                 onClick={copyLink}
@@ -405,10 +405,10 @@ function GalleryEditorContent() {
         {/* ======================================================== */}
         {/* 2. BARRA DE ABAS PRINCIPAL (EM PORTUGUÊS)                */}
         {/* ======================================================== */}
-        <div className="border-b border-zinc-200 flex items-center gap-6 text-xs">
+        <div className="border-b border-zinc-200 flex items-center gap-4 sm:gap-6 overflow-x-auto no-scrollbar text-xs">
           <button
             onClick={() => setActiveTab('gallery')}
-            className={`pb-3 font-medium flex items-center gap-1.5 transition-colors border-b-2 -mb-px cursor-pointer ${
+            className={`pb-3 font-medium flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-colors border-b-2 -mb-px cursor-pointer ${
               activeTab === 'gallery'
                 ? 'border-blue-600 text-blue-600 font-semibold'
                 : 'border-transparent text-zinc-600 hover:text-zinc-900'
@@ -420,7 +420,7 @@ function GalleryEditorContent() {
 
           <button
             onClick={() => setActiveTab('favorites')}
-            className={`pb-3 font-medium flex items-center gap-1.5 transition-colors border-b-2 -mb-px cursor-pointer ${
+            className={`pb-3 font-medium flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-colors border-b-2 -mb-px cursor-pointer ${
               activeTab === 'favorites'
                 ? 'border-blue-600 text-blue-600 font-semibold'
                 : 'border-transparent text-zinc-600 hover:text-zinc-900'
@@ -432,7 +432,7 @@ function GalleryEditorContent() {
 
           <button
             onClick={() => setActiveTab('settings')}
-            className={`pb-3 font-medium flex items-center gap-1.5 transition-colors border-b-2 -mb-px cursor-pointer ${
+            className={`pb-3 font-medium flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-colors border-b-2 -mb-px cursor-pointer ${
               activeTab === 'settings'
                 ? 'border-blue-600 text-blue-600 font-semibold'
                 : 'border-transparent text-zinc-600 hover:text-zinc-900'
@@ -444,7 +444,7 @@ function GalleryEditorContent() {
 
           <button
             onClick={() => setActiveTab('design')}
-            className={`pb-3 font-medium flex items-center gap-1.5 transition-colors border-b-2 -mb-px cursor-pointer ${
+            className={`pb-3 font-medium flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-colors border-b-2 -mb-px cursor-pointer ${
               activeTab === 'design'
                 ? 'border-blue-600 text-blue-600 font-semibold'
                 : 'border-transparent text-zinc-600 hover:text-zinc-900'
@@ -476,7 +476,7 @@ function GalleryEditorContent() {
         {activeTab === 'gallery' && (
           <div className="space-y-5">
             {/* Linha de Pastas */}
-            <div className="flex items-center gap-2.5 overflow-x-auto pb-1">
+            <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar pb-1">
               {/* Pasta Geral / Todas */}
               <button
                 onClick={() => setActiveFolder('all')}
@@ -524,7 +524,7 @@ function GalleryEditorContent() {
                           toast('Pasta removida.', 'info');
                         }
                       }}
-                      className="p-1 rounded-md text-zinc-400 hover:text-rose-600 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="p-1 rounded-md text-zinc-400 hover:text-rose-600 hover:bg-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                       title="Excluir pasta"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -714,7 +714,7 @@ function GalleryEditorContent() {
                           className={`absolute top-2 left-2 z-10 w-6 h-6 rounded-md flex items-center justify-center transition-all cursor-pointer shadow-xs ${
                             isSelected
                               ? 'bg-blue-600 text-white ring-2 ring-white'
-                              : 'bg-black/50 text-white/70 hover:bg-black/80 hover:text-white opacity-0 group-hover:opacity-100'
+                              : 'bg-black/50 text-white/80 hover:bg-black/80 hover:text-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100'
                           }`}
                           title={isSelected ? 'Desmarcar foto' : 'Selecionar para mover em grupo'}
                         >
@@ -797,8 +797,8 @@ function GalleryEditorContent() {
         {/* BARRA FLUTUANTE DE AÇÕES EM LOTE (QUANDO SELECIONADAS)   */}
         {/* ======================================================== */}
         {selectedPhotoIds.length > 0 && activeTab === 'gallery' && (
-          <div className="fixed bottom-6 inset-x-0 z-40 flex justify-center px-4 animate-in slide-in-from-bottom-6 duration-200">
-            <div className="bg-zinc-950 text-white px-5 py-3 rounded-2xl shadow-2xl border border-zinc-800 flex items-center gap-4 text-xs">
+          <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] lg:bottom-6 inset-x-0 z-40 flex justify-center px-3 sm:px-4 animate-in slide-in-from-bottom-6 duration-200">
+            <div className="bg-zinc-950 text-white px-3.5 py-2.5 sm:px-5 sm:py-3 rounded-2xl shadow-2xl border border-zinc-800 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs max-w-full">
               <div className="flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">
                   {selectedPhotoIds.length}
@@ -1136,7 +1136,7 @@ function GalleryEditorContent() {
                 <label className="font-medium text-zinc-700 block mb-2">
                   Ou clique em qualquer foto abaixo para defini-la como capa:
                 </label>
-                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                   {galleryPhotos.map((p) => {
                     const isSelected = settingsCoverUrl === p.url;
                     return (

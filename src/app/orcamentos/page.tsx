@@ -68,7 +68,7 @@ export default function QuotesPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
             <Link
               href="/orcamento"
               target="_blank"
