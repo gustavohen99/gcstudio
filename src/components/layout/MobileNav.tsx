@@ -23,12 +23,14 @@ import {
 
 interface MobileNavProps {
   isMenuOpen: boolean;
+  onOpenMenu: () => void;
   onCloseMenu: () => void;
   onOpenQuickCreate: () => void;
 }
 
 export const MobileNav: React.FC<MobileNavProps> = ({
   isMenuOpen,
+  onOpenMenu,
   onCloseMenu,
   onOpenQuickCreate,
 }) => {
@@ -37,8 +39,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
   const primaryItems = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Eventos', href: '/eventos', icon: Calendar },
-    { name: 'CRM', href: '/crm', icon: Kanban },
-    { name: 'Clientes', href: '/clientes', icon: Users },
+    { name: 'Financeiro', href: '/financeiro', icon: DollarSign },
   ];
 
   const allMenuItems = [
@@ -86,7 +87,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
         })}
 
         <button
-          onClick={onCloseMenu}
+          onClick={onOpenMenu}
           className="flex flex-col items-center justify-center min-w-[58px] py-1.5 px-2 rounded-xl text-zinc-600 hover:text-zinc-800 transition-colors cursor-pointer"
           aria-label="Mais opções"
         >

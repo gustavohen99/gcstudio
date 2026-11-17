@@ -35,6 +35,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
         {/* Mobile Navigation and Menu */}
         <MobileNav
           isMenuOpen={isMobileMenuOpen}
+          onOpenMenu={() => setIsMobileMenuOpen(true)}
           onCloseMenu={() => setIsMobileMenuOpen(false)}
           onOpenQuickCreate={() => setIsQuickCreateOpen(true)}
         />
