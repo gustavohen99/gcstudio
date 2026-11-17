@@ -1586,9 +1586,26 @@ export const useAppStore = () => {
   }, []);
 
   const updatePackage = useCallback((id: string, updates: Partial<Package>) => {
+    const existingPkg = globalState.packages.find((p) => p.id === id);
+    const updatedPackages = globalState.packages.map((p) =>
+      p.id === id ? { ...p, ...updates } : p
+    );
+    const updatedEvents = globalState.events.map((ev) => {
+      const matchesPkg =
+        ev.package_id === id || (existingPkg && ev.package_name === existingPkg.name);
+      if (!matchesPkg) return ev;
+      return {
+        ...ev,
+        package_name: updates.name !== undefined ? updates.name : ev.package_name,
+        package_description:
+          updates.description !== undefined ? updates.description : ev.package_description,
+      };
+    });
+
     globalState = {
       ...globalState,
-      packages: globalState.packages.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+      packages: updatedPackages,
+      events: updatedEvents,
     };
     notifyListeners();
   }, []);

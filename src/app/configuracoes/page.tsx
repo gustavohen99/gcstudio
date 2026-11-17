@@ -20,6 +20,7 @@ import {
   Upload,
   Copy,
   RefreshCw,
+  Edit2,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
@@ -35,8 +36,10 @@ export default function SettingsPage() {
     clients,
     updateSettings,
     addPackage,
+    updatePackage,
     deletePackage,
     addService,
+    updateService,
     deleteService,
     resetToDemoData,
     clearAllUserData,
@@ -71,24 +74,85 @@ export default function SettingsPage() {
     beneficiary: settings.bank_details.beneficiary,
   });
 
-  // Package Modal
+  // Package Modal (Create / Edit)
   const [pkgModalOpen, setPkgModalOpen] = useState(false);
-  const [newPkg, setNewPkg] = useState({
+  const [editingPkgId, setEditingPkgId] = useState<string | null>(null);
+  const [pkgForm, setPkgForm] = useState({
     name: '',
     description: '',
     price: 5000,
     category: 'Casamento',
-    features: ['Cobertura completa', 'Galeria online'],
+    featuresText: 'Cobertura completa\nGaleria online',
   });
 
-  // Service Modal
+  // Service Modal (Create / Edit)
   const [srvModalOpen, setSrvModalOpen] = useState(false);
-  const [newSrv, setNewSrv] = useState({
+  const [editingSrvId, setEditingSrvId] = useState<string | null>(null);
+  const [srvForm, setSrvForm] = useState({
     name: '',
     description: '',
-    price: 1200,
+    price: 300,
     category: 'Adicionais',
   });
+
+  const openCreatePackageModal = () => {
+    setEditingPkgId(null);
+    setPkgForm({
+      name: '',
+      description: '',
+      price: 1200,
+      category: 'Casamento',
+      featuresText: 'Todas as fotos editadas em alta resolução\nGaleria online',
+    });
+    setPkgModalOpen(true);
+  };
+
+  const openEditPackageModal = (pkg: {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+    features?: string[];
+  }) => {
+    setEditingPkgId(pkg.id);
+    setPkgForm({
+      name: pkg.name,
+      description: pkg.description || '',
+      price: pkg.price,
+      category: pkg.category || 'Casamento',
+      featuresText: (pkg.features || []).join('\n'),
+    });
+    setPkgModalOpen(true);
+  };
+
+  const openCreateServiceModal = () => {
+    setEditingSrvId(null);
+    setSrvForm({
+      name: '',
+      description: '',
+      price: 300,
+      category: 'Adicionais',
+    });
+    setSrvModalOpen(true);
+  };
+
+  const openEditServiceModal = (srv: {
+    id: string;
+    name: string;
+    description?: string;
+    price: number;
+    category?: string;
+  }) => {
+    setEditingSrvId(srv.id);
+    setSrvForm({
+      name: srv.name,
+      description: srv.description || '',
+      price: srv.price,
+      category: srv.category || 'Adicionais',
+    });
+    setSrvModalOpen(true);
+  };
 
   const handleSaveStudio = (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,33 +166,62 @@ export default function SettingsPage() {
     toast('Dados bancários e PIX atualizados!', 'success');
   };
 
-  const handleCreatePackage = (e: React.FormEvent) => {
+  const handleSavePackage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPkg.name) return;
-    addPackage({
-      name: newPkg.name,
-      description: newPkg.description,
-      price: Number(newPkg.price),
-      category: newPkg.category,
-      features: newPkg.features,
-      is_active: true,
-    });
+    if (!pkgForm.name.trim()) return;
+    const features = pkgForm.featuresText
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    if (editingPkgId) {
+      updatePackage(editingPkgId, {
+        name: pkgForm.name.trim(),
+        description: pkgForm.description.trim(),
+        price: Number(pkgForm.price) || 0,
+        category: pkgForm.category,
+        features,
+      });
+      toast('Pacote atualizado com sucesso!', 'success');
+    } else {
+      addPackage({
+        name: pkgForm.name.trim(),
+        description: pkgForm.description.trim(),
+        price: Number(pkgForm.price) || 0,
+        category: pkgForm.category,
+        features,
+        is_active: true,
+      });
+      toast('Pacote cadastrado com sucesso!', 'success');
+    }
     setPkgModalOpen(false);
-    toast('Pacote cadastrado com sucesso!', 'success');
+    setEditingPkgId(null);
   };
 
-  const handleCreateService = (e: React.FormEvent) => {
+  const handleSaveService = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSrv.name) return;
-    addService({
-      name: newSrv.name,
-      description: newSrv.description,
-      price: Number(newSrv.price),
-      category: newSrv.category,
-      is_active: true,
-    });
+    if (!srvForm.name.trim()) return;
+
+    if (editingSrvId) {
+      updateService(editingSrvId, {
+        name: srvForm.name.trim(),
+        description: srvForm.description.trim(),
+        price: Number(srvForm.price) || 0,
+        category: srvForm.category,
+      });
+      toast('Serviço adicional atualizado!', 'success');
+    } else {
+      addService({
+        name: srvForm.name.trim(),
+        description: srvForm.description.trim(),
+        price: Number(srvForm.price) || 0,
+        category: srvForm.category,
+        is_active: true,
+      });
+      toast('Serviço adicional cadastrado!', 'success');
+    }
     setSrvModalOpen(false);
-    toast('Serviço adicional cadastrado!', 'success');
+    setEditingSrvId(null);
   };
 
   const handleResetDemo = () => {
@@ -388,8 +481,8 @@ END $$;`;
                     </p>
                   </div>
                   <button
-                    onClick={() => setPkgModalOpen(true)}
-                    className="px-3.5 py-1.5 rounded-xl bg-zinc-900 text-white text-xs font-medium flex items-center gap-1.5"
+                    onClick={openCreatePackageModal}
+                    className="px-3.5 py-1.5 rounded-xl bg-zinc-900 text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5 text-[#C5A880]" />
                     <span>+ Novo Pacote</span>
@@ -403,25 +496,48 @@ END $$;`;
                       className="p-5 rounded-2xl bg-white border border-[#EAEAE4] flex flex-col justify-between space-y-3"
                     >
                       <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2">
                           <span className="text-xs font-semibold text-zinc-900">{pkg.name}</span>
-                          <span className="text-xs font-bold text-zinc-900 font-serif-brand">
+                          <span className="text-xs font-bold text-zinc-900 font-serif-brand shrink-0">
                             {formatCurrency(pkg.price)}
                           </span>
                         </div>
                         <p className="text-xs text-zinc-500 leading-relaxed">{pkg.description}</p>
+                        {pkg.features && pkg.features.length > 0 && (
+                          <p className="text-[11px] text-zinc-400">
+                            {pkg.features.join(' • ')}
+                          </p>
+                        )}
                       </div>
 
                       <div className="pt-2 border-t border-zinc-100 flex items-center justify-between text-xs">
                         <span className="text-[10px] uppercase font-bold text-zinc-400">
                           {pkg.category}
                         </span>
-                        <button
-                          onClick={() => deletePackage(pkg.id)}
-                          className="text-zinc-400 hover:text-rose-600 transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openEditPackageModal(pkg)}
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-zinc-600 hover:text-zinc-950 px-2 py-1 rounded-lg hover:bg-zinc-100 transition-colors cursor-pointer"
+                            title="Editar pacote"
+                          >
+                            <Edit2 className="w-3 h-3 text-[#C5A880]" />
+                            <span>Editar</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (confirm(`Remover o pacote "${pkg.name}"?`)) {
+                                deletePackage(pkg.id);
+                                toast('Pacote removido.', 'info');
+                              }
+                            }}
+                            className="p-1 text-zinc-400 hover:text-rose-600 transition-colors cursor-pointer"
+                            title="Remover pacote"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -434,12 +550,12 @@ END $$;`;
                   <div>
                     <h3 className="text-sm font-semibold text-zinc-900">Serviços Adicionais</h3>
                     <p className="text-xs text-zinc-500">
-                      Itens avulsos (Drone, Storymaker, Horas extras, etc.)
+                      Itens avulsos (Drone, Storymaker, Making Off, Ensaio em Studio, etc.)
                     </p>
                   </div>
                   <button
-                    onClick={() => setSrvModalOpen(true)}
-                    className="px-3.5 py-1.5 rounded-xl bg-zinc-900 text-white text-xs font-medium flex items-center gap-1.5"
+                    onClick={openCreateServiceModal}
+                    className="px-3.5 py-1.5 rounded-xl bg-zinc-900 text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5 text-[#C5A880]" />
                     <span>+ Novo Serviço</span>
@@ -450,18 +566,46 @@ END $$;`;
                   {services.map((srv) => (
                     <div
                       key={srv.id}
-                      className="p-4 rounded-xl bg-white border border-[#EAEAE4] flex items-center justify-between text-xs"
+                      className="p-4 rounded-xl bg-white border border-[#EAEAE4] flex flex-col justify-between gap-2 text-xs"
                     >
-                      <div>
-                        <span className="font-semibold text-zinc-900 block">{srv.name}</span>
-                        <span className="text-zinc-500">{formatCurrency(srv.price)}</span>
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <span className="font-semibold text-zinc-900 block">{srv.name}</span>
+                          <span className="text-zinc-700 font-semibold font-serif-brand">
+                            {formatCurrency(srv.price)}
+                          </span>
+                        </div>
+                        <span className="text-[10px] uppercase font-bold text-zinc-400 shrink-0">
+                          {srv.category}
+                        </span>
                       </div>
-                      <button
-                        onClick={() => deleteService(srv.id)}
-                        className="text-zinc-400 hover:text-rose-600"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      {srv.description && (
+                        <p className="text-[11px] text-zinc-500 leading-relaxed">{srv.description}</p>
+                      )}
+                      <div className="pt-2 border-t border-zinc-100 flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEditServiceModal(srv)}
+                          className="inline-flex items-center gap-1 text-[11px] font-medium text-zinc-600 hover:text-zinc-950 px-2 py-1 rounded-lg hover:bg-zinc-100 transition-colors cursor-pointer"
+                          title="Editar serviço"
+                        >
+                          <Edit2 className="w-3 h-3 text-[#C5A880]" />
+                          <span>Editar</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (confirm(`Remover o serviço "${srv.name}"?`)) {
+                              deleteService(srv.id);
+                              toast('Serviço removido.', 'info');
+                            }
+                          }}
+                          className="p-1 text-zinc-400 hover:text-rose-600 cursor-pointer"
+                          title="Remover serviço"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -771,21 +915,24 @@ END $$;`;
           )}
         </div>
 
-        {/* Modal Novo Pacote */}
+        {/* Modal Novo / Editar Pacote */}
         <Modal
           isOpen={pkgModalOpen}
-          onClose={() => setPkgModalOpen(false)}
-          title="Cadastrar Novo Pacote"
+          onClose={() => {
+            setPkgModalOpen(false);
+            setEditingPkgId(null);
+          }}
+          title={editingPkgId ? 'Editar Pacote' : 'Cadastrar Novo Pacote'}
         >
-          <form onSubmit={handleCreatePackage} className="space-y-4 text-xs">
+          <form onSubmit={handleSavePackage} className="space-y-4 text-xs">
             <div>
               <label className="block font-medium text-zinc-700 mb-1">Nome do Pacote *</label>
               <input
                 type="text"
                 required
                 placeholder="Ex: Diamond — Foto + Vídeo + Álbum"
-                value={newPkg.name}
-                onChange={(e) => setNewPkg({ ...newPkg, name: e.target.value })}
+                value={pkgForm.name}
+                onChange={(e) => setPkgForm({ ...pkgForm, name: e.target.value })}
                 className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900"
               />
             </div>
@@ -795,17 +942,18 @@ END $$;`;
                 <label className="block font-medium text-zinc-700 mb-1">Preço (R$) *</label>
                 <input
                   type="number"
+                  min="0"
                   required
-                  value={newPkg.price}
-                  onChange={(e) => setNewPkg({ ...newPkg, price: Number(e.target.value) })}
+                  value={pkgForm.price}
+                  onChange={(e) => setPkgForm({ ...pkgForm, price: Number(e.target.value) })}
                   className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900"
                 />
               </div>
               <div>
                 <label className="block font-medium text-zinc-700 mb-1">Categoria</label>
                 <select
-                  value={newPkg.category}
-                  onChange={(e) => setNewPkg({ ...newPkg, category: e.target.value })}
+                  value={pkgForm.category}
+                  onChange={(e) => setPkgForm({ ...pkgForm, category: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900 bg-white"
                 >
                   <option value="Casamento">Casamento</option>
@@ -821,8 +969,21 @@ END $$;`;
               <label className="block font-medium text-zinc-700 mb-1">Descrição</label>
               <textarea
                 rows={2}
-                value={newPkg.description}
-                onChange={(e) => setNewPkg({ ...newPkg, description: e.target.value })}
+                value={pkgForm.description}
+                onChange={(e) => setPkgForm({ ...pkgForm, description: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900"
+              />
+            </div>
+
+            <div>
+              <label className="block font-medium text-zinc-700 mb-1">
+                Itens e Entregas Inclusas (um item por linha)
+              </label>
+              <textarea
+                rows={3}
+                placeholder={'Cobertura 5h (Foto)\nTodas as fotos editadas em alta resolução'}
+                value={pkgForm.featuresText}
+                onChange={(e) => setPkgForm({ ...pkgForm, featuresText: e.target.value })}
                 className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900"
               />
             </div>
@@ -830,47 +991,80 @@ END $$;`;
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
-                onClick={() => setPkgModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-700"
+                onClick={() => {
+                  setPkgModalOpen(false);
+                  setEditingPkgId(null);
+                }}
+                className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-700 cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-xl bg-zinc-900 text-white font-medium"
+                className="px-5 py-2 rounded-xl bg-zinc-900 text-white font-medium cursor-pointer"
               >
-                Salvar Pacote
+                {editingPkgId ? 'Salvar Alterações' : 'Salvar Pacote'}
               </button>
             </div>
           </form>
         </Modal>
 
-        {/* Modal Novo Serviço */}
+        {/* Modal Novo / Editar Serviço */}
         <Modal
           isOpen={srvModalOpen}
-          onClose={() => setSrvModalOpen(false)}
-          title="Cadastrar Serviço Adicional"
+          onClose={() => {
+            setSrvModalOpen(false);
+            setEditingSrvId(null);
+          }}
+          title={editingSrvId ? 'Editar Serviço Adicional' : 'Cadastrar Serviço Adicional'}
         >
-          <form onSubmit={handleCreateService} className="space-y-4 text-xs">
+          <form onSubmit={handleSaveService} className="space-y-4 text-xs">
             <div>
               <label className="block font-medium text-zinc-700 mb-1">Nome do Serviço *</label>
               <input
                 type="text"
                 required
                 placeholder="Ex: Painel LED ou Filmagem Subaquática"
-                value={newSrv.name}
-                onChange={(e) => setNewSrv({ ...newSrv, name: e.target.value })}
+                value={srvForm.name}
+                onChange={(e) => setSrvForm({ ...srvForm, name: e.target.value })}
                 className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900"
               />
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block font-medium text-zinc-700 mb-1">Preço (R$) *</label>
+                <input
+                  type="number"
+                  min="0"
+                  required
+                  value={srvForm.price}
+                  onChange={(e) => setSrvForm({ ...srvForm, price: Number(e.target.value) })}
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900"
+                />
+              </div>
+              <div>
+                <label className="block font-medium text-zinc-700 mb-1">Categoria</label>
+                <select
+                  value={srvForm.category}
+                  onChange={(e) => setSrvForm({ ...srvForm, category: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900 bg-white"
+                >
+                  <option value="Adicionais">Adicionais</option>
+                  <option value="15 anos">15 anos</option>
+                  <option value="Casamento">Casamento</option>
+                  <option value="Ensaio">Ensaio</option>
+                </select>
+              </div>
+            </div>
+
             <div>
-              <label className="block font-medium text-zinc-700 mb-1">Preço (R$) *</label>
-              <input
-                type="number"
-                required
-                value={newSrv.price}
-                onChange={(e) => setNewSrv({ ...newSrv, price: Number(e.target.value) })}
+              <label className="block font-medium text-zinc-700 mb-1">Descrição</label>
+              <textarea
+                rows={2}
+                placeholder="Descrição curta do adicional..."
+                value={srvForm.description}
+                onChange={(e) => setSrvForm({ ...srvForm, description: e.target.value })}
                 className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900"
               />
             </div>
@@ -878,16 +1072,19 @@ END $$;`;
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
-                onClick={() => setSrvModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-700"
+                onClick={() => {
+                  setSrvModalOpen(false);
+                  setEditingSrvId(null);
+                }}
+                className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-700 cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-xl bg-zinc-900 text-white font-medium"
+                className="px-5 py-2 rounded-xl bg-zinc-900 text-white font-medium cursor-pointer"
               >
-                Salvar Serviço
+                {editingSrvId ? 'Salvar Alterações' : 'Salvar Serviço'}
               </button>
             </div>
           </form>
