@@ -4,7 +4,14 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
 import { useAppStore } from '@/lib/store';
-import { formatCurrency, formatDate, getWhatsAppUrl, getLeadStatusConfig } from '@/lib/utils';
+import {
+  formatCurrency,
+  formatDate,
+  getWhatsAppUrl,
+  getLeadStatusConfig,
+  findDateConflicts,
+} from '@/lib/utils';
+import { ScheduleConflictAlert } from '@/components/events/ScheduleConflictAlert';
 import {
   Kanban,
   Plus,
@@ -38,7 +45,7 @@ const COLUMNS: LeadStatus[] = [
 export default function CRMPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { leads, updateLead, convertLeadToClient, deleteLead } = useAppStore();
+  const { leads, events, updateLead, convertLeadToClient, deleteLead } = useAppStore();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [mobileStageFilter, setMobileStageFilter] = useState<LeadStatus | 'TODAS'>('TODAS');
@@ -165,44 +172,56 @@ export default function CRMPage() {
 
                 {/* Cards Container */}
                 <div className="flex-1 space-y-2.5 overflow-y-auto">
-                  {colLeads.map((lead) => (
-                    <div
-                      key={lead.id}
-                      draggable
-                      onDragStart={() => handleDragStart(lead.id)}
-                      onClick={() => setSelectedLead(lead)}
-                      className="p-4 rounded-xl bg-white border border-[#EAEAE4] hover:border-zinc-300 shadow-xs hover:shadow-md transition-all cursor-pointer space-y-2 group active:scale-[0.98]"
-                    >
-                      <div className="flex items-start justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600">
-                          {lead.event_type}
-                        </span>
-                        <span className="text-[10px] text-zinc-400">
-                          Origem: {lead.origin}
-                        </span>
-                      </div>
+                  {colLeads.map((lead) => {
+                    const leadConflicts =
+                      lead.event_date && lead.status !== 'FECHADO' && lead.status !== 'PERDIDO'
+                        ? findDateConflicts(events, lead.event_date)
+                        : [];
+                    return (
+                      <div
+                        key={lead.id}
+                        draggable
+                        onDragStart={() => handleDragStart(lead.id)}
+                        onClick={() => setSelectedLead(lead)}
+                        className="p-4 rounded-xl bg-white border border-[#EAEAE4] hover:border-zinc-300 shadow-xs hover:shadow-md transition-all cursor-pointer space-y-2 group active:scale-[0.98]"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600">
+                            {lead.event_type}
+                          </span>
+                          {leadConflicts.length > 0 ? (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                              Choque de data
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-zinc-400">
+                              Origem: {lead.origin}
+                            </span>
+                          )}
+                        </div>
 
-                      <h4 className="text-xs font-semibold text-zinc-900 group-hover:text-zinc-700 transition-colors">
-                        {lead.name}
-                      </h4>
+                        <h4 className="text-xs font-semibold text-zinc-900 group-hover:text-zinc-700 transition-colors">
+                          {lead.name}
+                        </h4>
 
-                      <div className="flex items-center justify-between text-xs pt-1 border-t border-zinc-100">
-                        <span className="font-bold text-zinc-900 font-serif-brand">
-                          {formatCurrency(lead.estimated_value)}
-                        </span>
-                        <span className="text-[10px] text-zinc-500 flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-zinc-400" />
-                          {lead.event_date ? formatDate(lead.event_date) : 'Data indefinida'}
-                        </span>
-                      </div>
+                        <div className="flex items-center justify-between text-xs pt-1 border-t border-zinc-100">
+                          <span className="font-bold text-zinc-900 font-serif-brand">
+                            {formatCurrency(lead.estimated_value)}
+                          </span>
+                          <span className="text-[10px] text-zinc-500 flex items-center gap-1">
+                            <Calendar className="w-3 h-3 text-zinc-400" />
+                            {lead.event_date ? formatDate(lead.event_date) : 'Data indefinida'}
+                          </span>
+                        </div>
 
-                      {/* Quick Move Trigger for mobile / non-drag users */}
-                      <div className="flex items-center justify-between pt-1 text-[10px] text-zinc-400">
-                        <span>Última interação: {formatDate(lead.last_interaction)}</span>
-                        <ChevronRight className="w-3 h-3 text-zinc-300 group-hover:text-zinc-500" />
+                        {/* Quick Move Trigger for mobile / non-drag users */}
+                        <div className="flex items-center justify-between pt-1 text-[10px] text-zinc-400">
+                          <span>Última interação: {formatDate(lead.last_interaction)}</span>
+                          <ChevronRight className="w-3 h-3 text-zinc-300 group-hover:text-zinc-500" />
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
 
                   {colLeads.length === 0 && (
                     <div className="py-8 text-center text-xs text-zinc-400 border border-dashed border-zinc-200 rounded-xl">
@@ -300,6 +319,22 @@ export default function CRMPage() {
                   </select>
                 </div>
               </div>
+
+              {selectedLead.event_date && (() => {
+                const leadConflicts = findDateConflicts(events, selectedLead.event_date);
+                return leadConflicts.length > 0 ? (
+                  <ScheduleConflictAlert
+                    conflicts={leadConflicts}
+                    date={selectedLead.event_date}
+                    compact
+                  />
+                ) : (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-medium">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Agenda livre em {formatDate(selectedLead.event_date)}</span>
+                  </div>
+                );
+              })()}
 
               {selectedLead.notes && (
                 <div>

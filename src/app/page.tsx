@@ -12,6 +12,7 @@ import {
   getPaymentStatusConfig,
   sortEventsByProximity,
   buildAgendaEntries,
+  getConflictingDateMap,
 } from '@/lib/utils';
 import { buildBriefingContext } from '@/lib/briefing-config';
 import {
@@ -96,16 +97,33 @@ function DashboardContent() {
     return pendingPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
   }, [pendingPayments]);
 
+  const conflictMap = useMemo(() => getConflictingDateMap(events), [events]);
+
   // Attention Items (Pendências críticas)
   const attentionItems = useMemo(() => {
     const list: {
       id: string;
       title: string;
       desc: string;
-      type: 'pagamento' | 'briefing' | 'galeria' | 'entrega';
+      type: 'conflito' | 'pagamento' | 'briefing' | 'galeria' | 'entrega';
       link: string;
       badge: string;
     }[] = [];
+
+    // Conflitos de data na agenda (Anti-overbooking)
+    conflictMap.forEach((entriesOnDay, date) => {
+      const names = entriesOnDay
+        .map((e) => (e.isExtra ? `${e.event.name} (${e.sessionLabel})` : e.event.name))
+        .join(' • ');
+      list.push({
+        id: 'cf-' + date,
+        title: `Conflito de agenda em ${formatDate(date)}`,
+        desc: `${entriesOnDay.length} compromissos no mesmo dia: ${names}`,
+        type: 'conflito',
+        link: '/eventos',
+        badge: 'Choque de data',
+      });
+    });
 
     // Pagamentos atrasados
     payments
@@ -156,7 +174,7 @@ function DashboardContent() {
     });
 
     return list;
-  }, [payments, briefings, events, galleries, packages]);
+  }, [conflictMap, payments, briefings, events, galleries, packages]);
 
   return (
     <AppShell>
@@ -365,13 +383,17 @@ function DashboardContent() {
                 {agendaEntries.slice(0, 6).map((entry) => {
                   const evt = entry.event;
                   const statusCfg = getEventStatusConfig(evt.status);
+                  const hasDateConflict =
+                    evt.status !== 'cancelado' && conflictMap.has(entry.date);
                   return (
                     <div
                       key={entry.key}
-                      className={`p-5 rounded-2xl border shadow-xs transition-all hover:shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 group ${
-                        entry.isExtra
-                          ? 'bg-amber-50/30 border-amber-200/80 hover:border-[#C5A880]'
-                          : 'bg-white border-[#EAEAE4] hover:border-zinc-300'
+                      className={`p-4 sm:p-5 rounded-2xl border shadow-xs transition-all hover:shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 group ${
+                        hasDateConflict
+                          ? 'bg-rose-50/20 border-rose-200 hover:border-rose-300'
+                          : entry.isExtra
+                            ? 'bg-amber-50/30 border-amber-200/80 hover:border-[#C5A880]'
+                            : 'bg-white border-[#EAEAE4] hover:border-zinc-300'
                       }`}
                     >
                       <div className="flex items-start gap-4">
@@ -402,6 +424,11 @@ function DashboardContent() {
                             >
                               {statusCfg.label}
                             </span>
+                            {hasDateConflict && (
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200">
+                                Conflito
+                              </span>
+                            )}
                           </div>
 
                           <h3 className="text-sm font-semibold text-zinc-900 group-hover:text-zinc-700 transition-colors">
@@ -471,6 +498,9 @@ function DashboardContent() {
                     className="py-3 first:pt-0 last:pb-0 flex items-start gap-3 hover:bg-zinc-50/80 -mx-2 px-2 rounded-xl transition-colors group"
                   >
                     <div className="mt-0.5">
+                      {item.type === 'conflito' && (
+                        <AlertTriangle className="w-4 h-4 text-rose-500" />
+                      )}
                       {item.type === 'pagamento' && (
                         <DollarSign className="w-4 h-4 text-rose-500" />
                       )}

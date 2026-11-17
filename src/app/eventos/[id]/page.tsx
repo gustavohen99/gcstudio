@@ -17,9 +17,11 @@ import {
   getPackagesForEventType,
   getServicesForEventType,
   getSuggestedExtraSessions,
+  findDateConflicts,
 } from '@/lib/utils';
 import { ExtraSessionsEditor } from '@/components/events/ExtraSessionsEditor';
 import { EventDayModeSheet } from '@/components/events/EventDayModeSheet';
+import { ScheduleConflictAlert } from '@/components/events/ScheduleConflictAlert';
 import { buildBriefingContext } from '@/lib/briefing-config';
 import {
   Calendar,
@@ -410,6 +412,14 @@ function EventDetailContent() {
                 <span className="font-medium text-zinc-700">Pacote: </span>
                 {currentPackageInfo.description}
               </p>
+            )}
+
+            {event.status !== 'cancelado' && (
+              <ScheduleConflictAlert
+                conflicts={findDateConflicts(events, event.date, event.time, event.id)}
+                date={event.date}
+                compact
+              />
             )}
           </div>
 
@@ -1771,6 +1781,9 @@ function EventDetailContent() {
                 configForm.package_description,
                 configForm.addons
               )}
+              events={events}
+              excludeEventId={event.id}
+              mainDate={configForm.date}
             />
 
             <div className="p-4 rounded-2xl bg-[#FBFBF9] border border-[#EAEAE4] space-y-3">
@@ -1844,6 +1857,14 @@ function EventDetailContent() {
                 />
               </div>
             </div>
+
+            {configForm.date && (
+              <ScheduleConflictAlert
+                conflicts={findDateConflicts(events, configForm.date, configForm.time, event.id)}
+                date={configForm.date}
+                compact
+              />
+            )}
 
             <div>
               <label className="block font-medium text-zinc-700 mb-1">Local da Cobertura</label>

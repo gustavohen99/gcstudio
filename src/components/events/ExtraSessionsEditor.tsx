@@ -2,18 +2,26 @@
 
 import React from 'react';
 import { Calendar, Plus, Trash2 } from 'lucide-react';
-import { EventExtraSession } from '@/types';
+import { EventExtraSession, EventItem } from '@/types';
+import { findDateConflicts } from '@/lib/utils';
+import { ScheduleConflictAlert } from './ScheduleConflictAlert';
 
 interface ExtraSessionsEditorProps {
   sessions: EventExtraSession[];
   onChange: (next: EventExtraSession[]) => void;
   suggestedLabels?: string[];
+  events?: EventItem[];
+  excludeEventId?: string;
+  mainDate?: string;
 }
 
 export const ExtraSessionsEditor: React.FC<ExtraSessionsEditorProps> = ({
   sessions,
   onChange,
   suggestedLabels = [],
+  events = [],
+  excludeEventId,
+  mainDate,
 }) => {
   const createSession = (label: string): EventExtraSession => ({
     id: `ext-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -78,69 +86,100 @@ export const ExtraSessionsEditor: React.FC<ExtraSessionsEditorProps> = ({
         </p>
       ) : (
         <div className="space-y-2">
-          {sessions.map((s) => (
-            <div
-              key={s.id}
-              className="p-2.5 rounded-xl bg-white border border-zinc-200 grid grid-cols-1 sm:grid-cols-12 gap-2 items-end"
-            >
-              <div className="sm:col-span-3">
-                <label className="block text-[10px] font-medium text-zinc-500 mb-0.5">
-                  Etapa / Sessão
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ex: Pré-Wedding"
-                  value={s.label}
-                  onChange={(e) => handleUpdate(s.id, 'label', e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-lg border border-zinc-200 text-zinc-900 focus:outline-hidden focus:border-[#C5A880]"
-                />
+          {sessions.map((s) => {
+            const externalConflicts = s.date
+              ? findDateConflicts(events, s.date, s.time, excludeEventId)
+              : [];
+            const sameMainDate = Boolean(s.date && mainDate && s.date === mainDate);
+            const otherSameDaySessions = s.date
+              ? sessions.filter((other) => other.id !== s.id && other.date === s.date)
+              : [];
+            const hasConflict =
+              externalConflicts.length > 0 || sameMainDate || otherSameDaySessions.length > 0;
+
+            return (
+              <div
+                key={s.id}
+                className={`p-2.5 rounded-xl bg-white border space-y-2 ${
+                  hasConflict ? 'border-amber-300 bg-amber-50/20' : 'border-zinc-200'
+                }`}
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end">
+                  <div className="sm:col-span-3">
+                    <label className="block text-[10px] font-medium text-zinc-500 mb-0.5">
+                      Etapa / Sessão
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Pré-Wedding"
+                      value={s.label}
+                      onChange={(e) => handleUpdate(s.id, 'label', e.target.value)}
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-zinc-200 text-zinc-900 focus:outline-hidden focus:border-[#C5A880]"
+                    />
+                  </div>
+                  <div className="sm:col-span-3">
+                    <label className="block text-[10px] font-medium text-zinc-500 mb-0.5">
+                      Data (opcional)
+                    </label>
+                    <input
+                      type="date"
+                      value={s.date}
+                      onChange={(e) => handleUpdate(s.id, 'date', e.target.value)}
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-zinc-200 text-zinc-900 focus:outline-hidden focus:border-[#C5A880]"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] font-medium text-zinc-500 mb-0.5">
+                      Horário
+                    </label>
+                    <input
+                      type="time"
+                      value={s.time}
+                      onChange={(e) => handleUpdate(s.id, 'time', e.target.value)}
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-zinc-200 text-zinc-900 focus:outline-hidden focus:border-[#C5A880]"
+                    />
+                  </div>
+                  <div className="sm:col-span-3">
+                    <label className="block text-[10px] font-medium text-zinc-500 mb-0.5">
+                      Local
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Parque Barigui"
+                      value={s.location}
+                      onChange={(e) => handleUpdate(s.id, 'location', e.target.value)}
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-zinc-200 text-zinc-900 focus:outline-hidden focus:border-[#C5A880]"
+                    />
+                  </div>
+                  <div className="sm:col-span-1 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => handleRemove(s.id)}
+                      className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                      title="Remover data extra"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {externalConflicts.length > 0 && (
+                  <ScheduleConflictAlert
+                    conflicts={externalConflicts}
+                    date={s.date}
+                    compact
+                  />
+                )}
+
+                {(sameMainDate || otherSameDaySessions.length > 0) && (
+                  <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 font-medium">
+                    Atenção: esta data extra coincide com{' '}
+                    {sameMainDate ? 'a data principal deste evento' : 'outra sessão extra acima'}.
+                  </p>
+                )}
               </div>
-              <div className="sm:col-span-3">
-                <label className="block text-[10px] font-medium text-zinc-500 mb-0.5">
-                  Data (opcional)
-                </label>
-                <input
-                  type="date"
-                  value={s.date}
-                  onChange={(e) => handleUpdate(s.id, 'date', e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-lg border border-zinc-200 text-zinc-900 focus:outline-hidden focus:border-[#C5A880]"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="block text-[10px] font-medium text-zinc-500 mb-0.5">
-                  Horário
-                </label>
-                <input
-                  type="time"
-                  value={s.time}
-                  onChange={(e) => handleUpdate(s.id, 'time', e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-lg border border-zinc-200 text-zinc-900 focus:outline-hidden focus:border-[#C5A880]"
-                />
-              </div>
-              <div className="sm:col-span-3">
-                <label className="block text-[10px] font-medium text-zinc-500 mb-0.5">
-                  Local
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ex: Parque Barigui"
-                  value={s.location}
-                  onChange={(e) => handleUpdate(s.id, 'location', e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-lg border border-zinc-200 text-zinc-900 focus:outline-hidden focus:border-[#C5A880]"
-                />
-              </div>
-              <div className="sm:col-span-1 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => handleRemove(s.id)}
-                  className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                  title="Remover data extra"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

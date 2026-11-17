@@ -12,6 +12,7 @@ import {
   resolveEventPackage,
   sortEventsByProximity,
   buildAgendaEntries,
+  getConflictingDateMap,
 } from '@/lib/utils';
 import {
   Calendar,
@@ -43,6 +44,8 @@ export default function EventsPage() {
   const [search, setSearch] = useState('');
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<EventItem | null>(null);
+
+  const conflictMap = useMemo(() => getConflictingDateMap(events), [events]);
 
   const agendaEntries = useMemo(() => {
     const q = search.toLowerCase();
@@ -196,6 +199,8 @@ export default function EventsPage() {
               agendaEntries.map((entry) => {
                 const event = entry.event;
                 const statusCfg = getEventStatusConfig(event.status);
+                const hasDateConflict =
+                  event.status !== 'cancelado' && conflictMap.has(entry.date);
                 const pkg = resolveEventPackage(
                   packages,
                   event.package_name,
@@ -206,9 +211,11 @@ export default function EventsPage() {
                   <div
                     key={entry.key}
                     className={`p-5 rounded-2xl border shadow-xs hover:shadow-sm transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group ${
-                      entry.isExtra
-                        ? 'bg-amber-50/30 border-amber-200/80 hover:border-[#C5A880]'
-                        : 'bg-white border-[#EAEAE4] hover:border-zinc-300'
+                      hasDateConflict
+                        ? 'bg-rose-50/20 border-rose-200 hover:border-rose-300'
+                        : entry.isExtra
+                          ? 'bg-amber-50/30 border-amber-200/80 hover:border-[#C5A880]'
+                          : 'bg-white border-[#EAEAE4] hover:border-zinc-300'
                     }`}
                   >
                     <div className="flex items-start gap-4">
@@ -239,6 +246,11 @@ export default function EventsPage() {
                           >
                             {statusCfg.label}
                           </span>
+                          {hasDateConflict && (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200">
+                              Conflito de agenda
+                            </span>
+                          )}
                         </div>
 
                         <h3 className="text-base font-semibold text-zinc-900 group-hover:text-zinc-700 transition-colors">
@@ -368,29 +380,40 @@ export default function EventsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {agendaEntries.map((entry) => {
                 const evt = entry.event;
+                const hasDateConflict =
+                  evt.status !== 'cancelado' && conflictMap.has(entry.date);
                 return (
                   <Link
                     key={entry.key}
                     href={`/eventos/${evt.id}`}
                     className={`p-4 rounded-xl border transition-colors space-y-2 group block ${
-                      entry.isExtra
-                        ? 'border-amber-200 bg-amber-50/30 hover:border-[#C5A880]'
-                        : 'border-zinc-200 hover:border-[#C5A880]'
+                      hasDateConflict
+                        ? 'border-rose-200 bg-rose-50/20 hover:border-rose-300'
+                        : entry.isExtra
+                          ? 'border-amber-200 bg-amber-50/30 hover:border-[#C5A880]'
+                          : 'border-zinc-200 hover:border-[#C5A880]'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs font-semibold text-[#8B6E3F]">
                         {formatDate(entry.date)} • {entry.time}
                       </span>
-                      <span
-                        className={`text-[10px] px-2 py-0.5 rounded-md font-medium ${
-                          entry.isExtra
-                            ? 'bg-amber-100 text-[#8B6E3F]'
-                            : 'bg-zinc-100 text-zinc-600'
-                        }`}
-                      >
-                        {entry.isExtra ? entry.sessionLabel : evt.type}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        {hasDateConflict && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-rose-100 text-rose-700">
+                            Conflito
+                          </span>
+                        )}
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded-md font-medium ${
+                            entry.isExtra
+                              ? 'bg-amber-100 text-[#8B6E3F]'
+                              : 'bg-zinc-100 text-zinc-600'
+                          }`}
+                        >
+                          {entry.isExtra ? entry.sessionLabel : evt.type}
+                        </span>
+                      </div>
                     </div>
                     <h4 className="text-sm font-semibold text-zinc-900 group-hover:text-zinc-700">
                       {entry.isExtra ? `${evt.name} — ${entry.sessionLabel}` : evt.name}

@@ -24,8 +24,10 @@ import {
   getPackagesForEventType,
   getServicesForEventType,
   getSuggestedExtraSessions,
+  findDateConflicts,
 } from '@/lib/utils';
 import { ExtraSessionsEditor } from '@/components/events/ExtraSessionsEditor';
+import { ScheduleConflictAlert } from '@/components/events/ScheduleConflictAlert';
 
 interface QuickCreateModalProps {
   isOpen: boolean;
@@ -287,9 +289,20 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
       client_name: selectedClient ? selectedClient.name : 'Cliente',
       status: 'confirmado',
     });
+    const hasDateConflict =
+      findDateConflicts(events, eventForm.date, eventForm.time).length > 0 ||
+      extraSessions.some(
+        (s) => Boolean(s.date) && findDateConflicts(events, s.date, s.time).length > 0
+      );
+
     setSelectedAddonIds([]);
     setExtraSessions([]);
-    toast('Evento criado e valores lançados automaticamente no Financeiro!', 'success');
+    toast(
+      hasDateConflict
+        ? 'Evento criado! Atenção: existe outro compromisso marcado na mesma data.'
+        : 'Evento criado e valores lançados automaticamente no Financeiro!',
+      hasDateConflict ? 'info' : 'success'
+    );
     onClose();
   };
 
@@ -605,6 +618,14 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
               </div>
             </div>
 
+            {leadForm.event_date && (
+              <ScheduleConflictAlert
+                conflicts={findDateConflicts(events, leadForm.event_date)}
+                date={leadForm.event_date}
+                compact
+              />
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block font-medium text-zinc-700 mb-1">Origem do Contato</label>
@@ -764,6 +785,13 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
               </div>
             </div>
 
+            {eventForm.date && (
+              <ScheduleConflictAlert
+                conflicts={findDateConflicts(events, eventForm.date, eventForm.time)}
+                date={eventForm.date}
+              />
+            )}
+
             {/* Descrição do Pacote Selecionado */}
             {(() => {
               const selectedPkg = resolveEventPackage(
@@ -863,6 +891,8 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                 eventForm.package_description,
                 selectedAddonsList
               )}
+              events={events}
+              mainDate={eventForm.date}
             />
 
             {/* Descrição do Evento */}

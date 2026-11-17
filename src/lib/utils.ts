@@ -543,3 +543,86 @@ export function buildAgendaEntries(events: EventItem[]): AgendaEntry[] {
   });
   return entries;
 }
+
+export interface AgendaConflict {
+  key: string;
+  date: string;
+  time: string;
+  timeOverlap: boolean;
+  label: string;
+  location: string;
+  event: EventItem;
+  isExtra: boolean;
+}
+
+function parseTimeMinutes(time?: string): number | null {
+  if (!time) return null;
+  const [hStr, mStr] = time.trim().split(':');
+  const h = Number.parseInt(hStr || '', 10);
+  const m = Number.parseInt(mStr || '0', 10);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  return h * 60 + m;
+}
+
+/**
+ * Detecta conflitos de data (e proximidade de horário <= 2h) comparando uma data/horário
+ * contra todos os eventos ativos e sessões extras agendadas (Pré-Wedding, Civil, Ensaio...).
+ */
+export function findDateConflicts(
+  events: EventItem[],
+  targetDate?: string,
+  targetTime?: string,
+  excludeEventId?: string
+): AgendaConflict[] {
+  if (!targetDate) return [];
+
+  const activeEvents = events.filter(
+    (e) => e.status !== 'cancelado' && e.id !== excludeEventId
+  );
+  const entries = buildAgendaEntries(activeEvents).filter((entry) => entry.date === targetDate);
+  const targetMins = parseTimeMinutes(targetTime);
+
+  return entries.map((entry) => {
+    const entryMins = parseTimeMinutes(entry.time);
+    const timeOverlap =
+      targetMins === null ||
+      entryMins === null ||
+      Math.abs(targetMins - entryMins) <= 120;
+
+    return {
+      key: entry.key,
+      date: entry.date,
+      time: entry.time || '16:00',
+      timeOverlap,
+      label: entry.isExtra
+        ? `${entry.event.name} (${entry.sessionLabel})`
+        : entry.event.name,
+      location: entry.location,
+      event: entry.event,
+      isExtra: entry.isExtra,
+    };
+  });
+}
+
+/**
+ * Mapeia datas que possuem 2 ou mais compromissos ativos (eventos ou sessões extras).
+ */
+export function getConflictingDateMap(events: EventItem[]): Map<string, AgendaEntry[]> {
+  const active = events.filter((e) => e.status !== 'cancelado');
+  const byDate = new Map<string, AgendaEntry[]>();
+
+  buildAgendaEntries(active).forEach((entry) => {
+    if (!entry.date) return;
+    const list = byDate.get(entry.date) || [];
+    list.push(entry);
+    byDate.set(entry.date, list);
+  });
+
+  const conflicts = new Map<string, AgendaEntry[]>();
+  byDate.forEach((list, date) => {
+    if (list.length >= 2) {
+      conflicts.set(date, list);
+    }
+  });
+  return conflicts;
+}
