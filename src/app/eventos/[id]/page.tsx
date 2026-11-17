@@ -388,7 +388,7 @@ function EventDetailContent() {
 
         {/* Master Event Header */}
         <div className="p-6 rounded-2xl bg-white border border-[#EAEAE4] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700">
                 {event.type}
@@ -398,17 +398,15 @@ function EventDetailContent() {
               >
                 {statusCfg.label}
               </span>
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#8B6E3F] bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full">
+                <PackageIcon className="w-3 h-3 text-[#C5A880]" />
+                {event.package_name || currentPackageInfo?.name || 'Personalizado'}
+              </span>
             </div>
 
             <h1 className="font-serif-brand text-3xl sm:text-4xl font-normal text-zinc-900 tracking-tight">
               {event.name}
             </h1>
-
-            {event.description && (
-              <p className="text-xs text-zinc-600 max-w-2xl leading-relaxed pt-0.5">
-                {event.description}
-              </p>
-            )}
 
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-zinc-600">
               <span className="flex items-center gap-1.5 font-medium text-zinc-800">
@@ -425,81 +423,16 @@ function EventDetailContent() {
               </span>
             </div>
 
-            {/* Descrição do Pacote no Painel do Evento */}
-            <div className="pt-2 border-t border-zinc-100 max-w-2xl">
-              <div className="p-3.5 rounded-xl bg-amber-50/50 border border-amber-200/70 space-y-1.5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-900">
-                    <PackageIcon className="w-3.5 h-3.5 text-[#C5A880]" />
-                    <span>
-                      Pacote Contratado:{' '}
-                      <strong className="text-[#8B6E3F]">
-                        {event.package_name || currentPackageInfo?.name || 'Personalizado'}
-                      </strong>
-                    </span>
-                  </span>
-                  {currentPackageInfo && currentPackageInfo.price > 0 && (
-                    <span className="text-xs font-bold text-[#8B6E3F] font-serif-brand">
-                      {formatCurrency(currentPackageInfo.price)}
-                    </span>
-                  )}
-                </div>
-
-                <p className="text-xs text-zinc-700 leading-relaxed">
-                  <span className="font-semibold text-zinc-800">Descrição do Pacote: </span>
-                  {currentPackageInfo?.description ||
-                    'Pacote com especificações e entregas customizadas para este evento.'}
-                </p>
-
-                {currentPackageInfo?.features && currentPackageInfo.features.length > 0 && (
-                  <div className="pt-1.5 border-t border-amber-200/50 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-zinc-600">
-                    {currentPackageInfo.features.map((feat, idx) => (
-                      <span key={idx} className="flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-                        <span>{feat}</span>
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {event.addons && event.addons.length > 0 && (
-                  <div className="pt-1.5 border-t border-amber-200/50 flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-700">
-                    <span className="font-semibold text-[#8B6E3F]">Adicionais:</span>
-                    {event.addons.map((addon) => (
-                      <span
-                        key={addon.id}
-                        className="px-2 py-0.5 rounded-md bg-white border border-amber-200/70 text-zinc-800"
-                      >
-                        {addon.name} (+{formatCurrency(addon.price)})
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {event.extra_sessions && event.extra_sessions.length > 0 && (
-                  <div className="pt-1.5 border-t border-amber-200/50 space-y-1 text-[11px] text-zinc-700">
-                    <span className="font-semibold text-[#8B6E3F] block">Datas Extras Agendadas:</span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {event.extra_sessions.map((ex) => (
-                        <span
-                          key={ex.id}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-amber-200/70 text-zinc-800"
-                        >
-                          <Calendar className="w-3 h-3 text-[#C5A880]" />
-                          <strong>{ex.label}:</strong>{' '}
-                          {ex.date ? `${formatDate(ex.date)} às ${ex.time || '16:00'}` : 'Data a definir'}
-                          {ex.location ? ` • ${ex.location}` : ''}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            {currentPackageInfo?.description && (
+              <p className="text-xs text-zinc-500 max-w-2xl leading-relaxed">
+                <span className="font-medium text-zinc-700">Pacote: </span>
+                {currentPackageInfo.description}
+              </p>
+            )}
           </div>
 
-          {/* Right Header: Status Selector, Value & Config Button */}
-          <div className="flex flex-col sm:items-end justify-between gap-3 border-t md:border-t-0 pt-3 md:pt-0 border-zinc-100">
+          {/* Right Header: Value, Single Config Button & Status Selector */}
+          <div className="flex flex-col sm:items-end justify-between gap-3 border-t md:border-t-0 pt-3 md:pt-0 border-zinc-100 shrink-0">
             <div className="text-left sm:text-right">
               <span className="text-[10px] text-zinc-400 uppercase tracking-wider block">
                 Valor Total Contratado
@@ -583,24 +516,22 @@ function EventDetailContent() {
               <div className="md:col-span-2 space-y-6">
                 <div className="p-6 rounded-2xl bg-white border border-[#EAEAE4] space-y-5">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-zinc-900">Visão Geral & Configuração da Produção</h3>
-                    <button
-                      onClick={openConfigModal}
-                      className="text-xs font-medium text-[#8B6E3F] hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" /> Editar configurações
-                    </button>
+                    <h3 className="text-sm font-semibold text-zinc-900">
+                      Resumo da Produção
+                    </h3>
+                    <span className="text-xs text-zinc-500">
+                      Cliente: <strong className="text-zinc-800">{event.client_name}</strong>
+                    </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                    <div>
-                      <span className="text-zinc-400 block mb-1">Cliente Contratante</span>
-                      <span className="font-semibold text-zinc-800">{event.client_name}</span>
-                    </div>
-                    <div>
-                      <label className="text-zinc-400 block mb-1">
-                        Pacote Escolhido ({event.type} — Alterar Pacote)
-                      </label>
+                  {/* Pacote, Itens e Adicionais */}
+                  <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200/70 space-y-3 text-xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <span className="font-semibold text-zinc-900 flex items-center gap-1.5">
+                        <PackageIcon className="w-4 h-4 text-[#8B6E3F]" />
+                        <span>Pacote & Entregas ({event.type})</span>
+                      </span>
+
                       {(() => {
                         const typePackages = getPackagesForEventType(packages, event.type);
                         const selectOptions =
@@ -609,12 +540,13 @@ function EventDetailContent() {
                           !typePackages.some((p) => p.name === currentPackageInfo.name)
                             ? [
                                 ...typePackages,
-                                ...(packages.filter((p) => p.name === currentPackageInfo.name)),
+                                ...packages.filter((p) => p.name === currentPackageInfo.name),
                               ]
                             : typePackages;
 
                         return (
                           <select
+                            aria-label="Alterar pacote"
                             value={
                               selectOptions.some((p) => p.name === event.package_name)
                                 ? event.package_name
@@ -624,7 +556,7 @@ function EventDetailContent() {
                                 : 'Personalizado'
                             }
                             onChange={(e) => handlePackageChange(e.target.value)}
-                            className="w-full px-3 py-1.5 rounded-xl border border-zinc-200 bg-zinc-50 font-semibold text-zinc-800 focus:outline-hidden focus:border-[#C5A880]"
+                            className="sm:w-64 px-3 py-1.5 rounded-xl border border-amber-200 bg-white font-semibold text-zinc-800 focus:outline-hidden focus:border-[#C5A880]"
                           >
                             {selectOptions.map((pkg) => (
                               <option key={pkg.id} value={pkg.name}>
@@ -640,184 +572,80 @@ function EventDetailContent() {
                         );
                       })()}
                     </div>
-                    <div>
-                      <span className="text-zinc-400 block mb-0.5">Data e Horário</span>
-                      <span className="font-semibold text-zinc-800">
-                        {formatDate(event.date)} às {event.time}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-zinc-400 block mb-0.5">Local da Cobertura</span>
-                      <span className="font-semibold text-zinc-800">{event.location}</span>
-                    </div>
+
+                    {currentPackageInfo?.features && currentPackageInfo.features.length > 0 && (
+                      <div className="pt-2 border-t border-amber-200/50 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                        {currentPackageInfo.features.map((feat, idx) => (
+                          <div key={idx} className="flex items-center gap-1.5 text-zinc-700 text-[11px]">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <span>{feat}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {event.addons && event.addons.length > 0 && (
+                      <div className="pt-2 border-t border-amber-200/50 flex flex-wrap items-center gap-1.5">
+                        <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider mr-1">
+                          Adicionais:
+                        </span>
+                        {event.addons.map((addon) => (
+                          <span
+                            key={addon.id}
+                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-white border border-amber-200/70 text-[11px] font-medium text-zinc-800"
+                          >
+                            {addon.name} (+{formatCurrency(addon.price)})
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Descrição do Pacote Escolhido */}
-                  <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200/70 space-y-2 text-xs">
-                    <div className="flex items-center justify-between">
+                  {/* Datas Extras na Agenda */}
+                  {event.extra_sessions && event.extra_sessions.length > 0 && (
+                    <div className="p-4 rounded-xl bg-[#FBFBF9] border border-[#EAEAE4] space-y-2 text-xs">
                       <span className="font-semibold text-zinc-900 flex items-center gap-1.5">
-                        <PackageIcon className="w-4 h-4 text-[#8B6E3F]" />
-                        Descrição do Pacote: {event.package_name || currentPackageInfo?.name || 'Personalizado'}
+                        <Calendar className="w-4 h-4 text-[#C5A880]" />
+                        Datas Extras na Agenda
                       </span>
-                      {currentPackageInfo && currentPackageInfo.price > 0 && (
-                        <span className="text-xs font-bold text-[#8B6E3F] font-serif-brand">
-                          {formatCurrency(currentPackageInfo.price)}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-zinc-700 leading-relaxed">
-                      {currentPackageInfo?.description ||
-                        'Pacote com especificações e entregas customizadas para este evento.'}
-                    </p>
-                    {currentPackageInfo?.features && currentPackageInfo.features.length > 0 && (
-                      <div className="pt-2 border-t border-amber-200/50 space-y-1.5">
-                        <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
-                          Itens e Entregas Inclusas no Pacote:
-                        </span>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-0.5">
-                          {currentPackageInfo.features.map((feat, idx) => (
-                            <div key={idx} className="flex items-center gap-1.5 text-zinc-700 text-[11px]">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                              <span>{feat}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {event.addons && event.addons.length > 0 && (
-                      <div className="pt-2 border-t border-amber-200/50 space-y-1">
-                        <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
-                          Serviços Adicionais Contratados:
-                        </span>
-                        <div className="flex flex-wrap gap-1.5 pt-0.5">
-                          {event.addons.map((addon) => (
-                            <span
-                              key={addon.id}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-amber-200/70 text-[11px] font-medium text-zinc-800"
-                            >
-                              {addon.name} ({formatCurrency(addon.price)})
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {event.extra_sessions.map((ex) => (
+                          <div
+                            key={ex.id}
+                            className="p-2.5 rounded-lg bg-white border border-zinc-200/80 text-[11px] space-y-0.5"
+                          >
+                            <span className="font-semibold text-zinc-900 block">{ex.label}</span>
+                            <span className="text-zinc-600 block">
+                              {ex.date
+                                ? `${formatDate(ex.date)} às ${ex.time || '16:00'}`
+                                : 'Data a definir'}
                             </span>
-                          ))}
-                        </div>
+                            {ex.location && (
+                              <span className="text-zinc-500 block truncate">{ex.location}</span>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    )}
-                    <div className="pt-2 border-t border-amber-200/50 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
-                          Datas Extras na Agenda (Civil, Pré-Wedding, Ensaio)
-                        </span>
-                        <button
-                          type="button"
-                          onClick={openConfigModal}
-                          className="text-[11px] font-medium text-[#8B6E3F] hover:underline cursor-pointer"
-                        >
-                          {event.extra_sessions && event.extra_sessions.length > 0
-                            ? 'Editar datas / locais'
-                            : '+ Marcar data e local'}
-                        </button>
-                      </div>
-                      {event.extra_sessions && event.extra_sessions.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
-                          {event.extra_sessions.map((ex) => (
-                            <div
-                              key={ex.id}
-                              className="p-2.5 rounded-lg bg-white border border-amber-200/70 text-[11px] space-y-0.5"
-                            >
-                              <span className="font-semibold text-zinc-900 block">{ex.label}</span>
-                              <span className="text-zinc-600 block">
-                                {ex.date
-                                  ? `${formatDate(ex.date)} às ${ex.time || '16:00'}`
-                                  : 'Data a definir'}
-                              </span>
-                              {ex.location && (
-                                <span className="text-zinc-500 block truncate">{ex.location}</span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-[11px] text-zinc-500 italic">
-                          Nenhuma data extra marcada para este evento.
+                    </div>
+                  )}
+
+                  {/* Descrição & Notas do Evento */}
+                  {(event.description || event.notes) && (
+                    <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-200/80 space-y-2 text-xs">
+                      <span className="font-semibold text-zinc-900 flex items-center gap-1.5">
+                        <FileText className="w-4 h-4 text-zinc-500" />
+                        Observações & Detalhes do Evento
+                      </span>
+                      {event.description && (
+                        <p className="text-zinc-700 leading-relaxed whitespace-pre-wrap">
+                          {event.description}
                         </p>
                       )}
-                    </div>
-                  </div>
-
-                  {/* Descrição do Evento */}
-                  <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-200/80 space-y-2 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-zinc-900 flex items-center gap-1.5">
-                        <FileText className="w-4 h-4 text-zinc-600" />
-                        Descrição do Evento
-                      </span>
-                      <button
-                        onClick={openConfigModal}
-                        className="text-[11px] text-[#8B6E3F] hover:underline flex items-center gap-1 cursor-pointer"
-                      >
-                        <Edit2 className="w-3 h-3" /> Editar
-                      </button>
-                    </div>
-                    {event.description ? (
-                      <p className="text-zinc-700 leading-relaxed whitespace-pre-wrap">
-                        {event.description}
-                      </p>
-                    ) : (
-                      <div className="flex items-center justify-between text-zinc-400 italic py-0.5">
-                        <span>Nenhuma descrição cadastrada para este evento.</span>
-                        <button
-                          onClick={openConfigModal}
-                          className="not-italic text-[11px] font-medium text-zinc-700 hover:text-zinc-950 underline cursor-pointer"
-                        >
-                          + Adicionar descrição do evento
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Configuração rápida do Valor de Entrada e Valor do Evento */}
-                  <div className="p-4 rounded-xl bg-[#FBFBF9] border border-[#EAEAE4] space-y-3 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-zinc-800">
-                        Valores & Entrada do Evento (Sincronizado com o Financeiro)
-                      </span>
-                      <button
-                        onClick={openConfigModal}
-                        className="px-2.5 py-1 rounded-lg bg-zinc-900 text-white text-[11px] font-medium hover:bg-zinc-800 cursor-pointer"
-                      >
-                        Alterar Entrada / Valor
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                      <div className="p-2.5 rounded-lg bg-white border border-zinc-200/80">
-                        <span className="text-[10px] text-zinc-400 uppercase block">Valor Total</span>
-                        <span className="text-sm font-bold text-zinc-900 font-serif-brand">
-                          {formatCurrency(event.value)}
-                        </span>
-                      </div>
-                      <div className="p-2.5 rounded-lg bg-white border border-zinc-200/80">
-                        <span className="text-[10px] text-zinc-400 uppercase block">Valor de Entrada</span>
-                        <span className="text-sm font-bold text-emerald-700 font-serif-brand">
-                          {formatCurrency(event.deposit_value || 0)}
-                        </span>
-                        <span className="text-[10px] text-zinc-500 ml-1.5">
-                          ({event.deposit_paid ? 'Paga' : 'Pendente'})
-                        </span>
-                      </div>
-                      <div className="p-2.5 rounded-lg bg-white border border-zinc-200/80">
-                        <span className="text-[10px] text-zinc-400 uppercase block">Saldo Restante</span>
-                        <span className="text-sm font-bold text-[#8B6E3F] font-serif-brand">
-                          {formatCurrency(Math.max(0, event.value - (event.deposit_value || 0)))}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {event.notes && (
-                    <div className="pt-3 border-t border-zinc-100 text-xs">
-                      <span className="text-zinc-400 block mb-1">Notas do Evento</span>
-                      <p className="p-3 bg-zinc-50 rounded-xl text-zinc-700 leading-relaxed">
-                        {event.notes}
-                      </p>
+                      {event.notes && (
+                        <p className="text-zinc-500 leading-relaxed pt-1 border-t border-zinc-200/60">
+                          {event.notes}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -849,8 +677,43 @@ function EventDetailContent() {
                 )}
               </div>
 
-              {/* Sidebar: Checklist rápido */}
+              {/* Sidebar: Resumo Financeiro + Checklist rápido */}
               <div className="space-y-4">
+                <div className="p-5 rounded-2xl bg-white border border-[#EAEAE4] space-y-3 text-xs">
+                  <h4 className="font-semibold text-zinc-900 flex items-center justify-between">
+                    <span>Resumo Financeiro</span>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('financeiro')}
+                      className="text-[11px] font-medium text-[#8B6E3F] hover:underline cursor-pointer"
+                    >
+                      Ver parcelas
+                    </button>
+                  </h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between py-1 border-b border-zinc-100">
+                      <span className="text-zinc-500">Valor Total</span>
+                      <span className="font-bold text-zinc-900 font-serif-brand">
+                        {formatCurrency(event.value)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-zinc-100">
+                      <span className="text-zinc-500">
+                        Entrada ({event.deposit_paid ? 'Paga' : 'Pendente'})
+                      </span>
+                      <span className="font-bold text-emerald-700 font-serif-brand">
+                        {formatCurrency(event.deposit_value || 0)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span className="text-zinc-500">Saldo Restante</span>
+                      <span className="font-bold text-[#8B6E3F] font-serif-brand">
+                        {formatCurrency(Math.max(0, event.value - (event.deposit_value || 0)))}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="p-5 rounded-2xl bg-white border border-[#EAEAE4] space-y-3">
                   <h4 className="text-xs font-semibold text-zinc-900 flex items-center justify-between">
                     <span>Progresso do Checklist</span>
