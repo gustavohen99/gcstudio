@@ -426,7 +426,7 @@ export function EditorialProposalView({ quote }: EditorialProposalViewProps) {
                     <span className="text-[10px] text-zinc-400 block uppercase tracking-wider font-medium">
                       Investimento
                     </span>
-                    <span className="font-serif-brand text-3xl font-medium text-white">
+                    <span className="font-sans tabular-nums tracking-tight text-2xl sm:text-3xl font-semibold text-white">
                       {formatCleanPrice(pkg.price)}
                     </span>
                   </div>
@@ -510,7 +510,7 @@ export function EditorialProposalView({ quote }: EditorialProposalViewProps) {
                   <span className="text-[10px] text-zinc-400 block uppercase tracking-wider">
                     Investimento Filmagem
                   </span>
-                  <span className="font-serif-brand text-3xl font-medium text-white">
+                  <span className="font-sans tabular-nums tracking-tight text-2xl sm:text-3xl font-semibold text-white">
                     {formatCleanPrice(filmPackage.price)}
                   </span>
                 </div>
@@ -601,7 +601,7 @@ export function EditorialProposalView({ quote }: EditorialProposalViewProps) {
                 <div className="pt-4 border-t border-white/10 flex items-center justify-between">
                   <div>
                     <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">Valor</span>
-                    <span className="font-serif-brand text-2xl font-medium text-white">
+                    <span className="font-sans tabular-nums tracking-tight text-xl sm:text-2xl font-semibold text-white">
                       {formatCleanPrice(addon.price)}
                     </span>
                   </div>
@@ -781,7 +781,7 @@ export function EditorialProposalView({ quote }: EditorialProposalViewProps) {
               Investimento Total Selecionado
             </span>
             <div className="flex items-baseline gap-2">
-              <span className="font-serif-brand text-2xl sm:text-3xl font-medium text-white">
+              <span className="font-sans tabular-nums tracking-tight text-xl sm:text-2xl font-semibold text-white">
                 {formatCleanPrice(totalCalculated)}
               </span>
               <span className="text-[11px] text-[#C5A880] hidden sm:inline">
@@ -862,7 +862,7 @@ export function EditorialProposalView({ quote }: EditorialProposalViewProps) {
 
               <div className="pt-3 border-t border-white/10 flex justify-between items-center text-white text-sm font-semibold">
                 <span>Investimento Total</span>
-                <span className="font-serif-brand text-xl text-[#C5A880]">
+                <span className="font-sans tabular-nums tracking-tight text-lg font-semibold text-[#C5A880]">
                   {formatCleanPrice(totalCalculated)}
                 </span>
               </div>

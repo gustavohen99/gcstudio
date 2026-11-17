@@ -504,7 +504,7 @@ END $$;`;
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-xs font-semibold text-zinc-900">{pkg.name}</span>
-                          <span className="text-xs font-bold text-zinc-900 font-serif-brand shrink-0">
+                          <span className="text-xs font-semibold text-zinc-900 font-sans tabular-nums tracking-tight shrink-0">
                             {formatCurrency(pkg.price)}
                           </span>
                         </div>
@@ -577,7 +577,7 @@ END $$;`;
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <span className="font-semibold text-zinc-900 block">{srv.name}</span>
-                          <span className="text-zinc-700 font-semibold font-serif-brand">
+                          <span className="text-zinc-700 font-semibold font-sans tabular-nums tracking-tight">
                             {formatCurrency(srv.price)}
                           </span>
                         </div>

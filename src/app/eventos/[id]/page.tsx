@@ -432,7 +432,7 @@ function EventDetailContent() {
               <span className="text-[10px] text-zinc-400 uppercase tracking-wider block">
                 Valor Total Contratado
               </span>
-              <span className="text-xl font-bold text-zinc-900 font-serif-brand">
+              <span className="text-xl font-bold text-zinc-900 font-sans tabular-nums tracking-tight">
                 {formatCurrency(event.value)}
               </span>
               {(event.deposit_value ?? 0) > 0 && (
@@ -712,7 +712,7 @@ function EventDetailContent() {
                   <div className="space-y-2">
                     <div className="flex justify-between py-1 border-b border-zinc-100">
                       <span className="text-zinc-500">Valor Total</span>
-                      <span className="font-bold text-zinc-900 font-serif-brand">
+                      <span className="font-semibold text-zinc-900 font-sans tabular-nums tracking-tight">
                         {formatCurrency(event.value)}
                       </span>
                     </div>
@@ -720,13 +720,13 @@ function EventDetailContent() {
                       <span className="text-zinc-500">
                         Entrada ({event.deposit_paid ? 'Paga' : 'Pendente'})
                       </span>
-                      <span className="font-bold text-emerald-700 font-serif-brand">
+                      <span className="font-semibold text-emerald-700 font-sans tabular-nums tracking-tight">
                         {formatCurrency(event.deposit_value || 0)}
                       </span>
                     </div>
                     <div className="flex justify-between py-1">
                       <span className="text-zinc-500">Saldo Restante</span>
-                      <span className="font-bold text-[#8B6E3F] font-serif-brand">
+                      <span className="font-semibold text-[#8B6E3F] font-sans tabular-nums tracking-tight">
                         {formatCurrency(Math.max(0, event.value - (event.deposit_value || 0)))}
                       </span>
                     </div>
@@ -1332,19 +1332,19 @@ function EventDetailContent() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-[#EAEAE4]">
                   <span className="text-[11px] sm:text-xs text-zinc-400">Valor Total</span>
-                  <p className="text-base sm:text-lg font-bold text-zinc-900 mt-0.5 font-serif-brand">
+                  <p className="text-base sm:text-lg font-bold text-zinc-900 mt-0.5 font-sans tabular-nums tracking-tight">
                     {formatCurrency(event.value)}
                   </p>
                 </div>
                 <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-[#EAEAE4]">
                   <span className="text-[11px] sm:text-xs text-zinc-400">Valor de Entrada</span>
-                  <p className="text-base sm:text-lg font-bold text-zinc-900 mt-0.5 font-serif-brand">
+                  <p className="text-base sm:text-lg font-bold text-zinc-900 mt-0.5 font-sans tabular-nums tracking-tight">
                     {formatCurrency(event.deposit_value || 0)}
                   </p>
                 </div>
                 <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-[#EAEAE4]">
                   <span className="text-[11px] sm:text-xs text-zinc-400">Total Recebido</span>
-                  <p className="text-base sm:text-lg font-bold text-emerald-600 mt-0.5 font-serif-brand">
+                  <p className="text-base sm:text-lg font-bold text-emerald-600 mt-0.5 font-sans tabular-nums tracking-tight">
                     {formatCurrency(
                       eventPayments
                         .filter((p) => p.status === 'pago')
@@ -1354,7 +1354,7 @@ function EventDetailContent() {
                 </div>
                 <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-[#EAEAE4]">
                   <span className="text-[11px] sm:text-xs text-zinc-400">Saldo a Receber</span>
-                  <p className="text-base sm:text-lg font-bold text-[#8B6E3F] mt-0.5 font-serif-brand">
+                  <p className="text-base sm:text-lg font-bold text-[#8B6E3F] mt-0.5 font-sans tabular-nums tracking-tight">
                     {formatCurrency(
                       eventPayments
                         .filter((p) => p.status !== 'pago')
@@ -1719,7 +1719,7 @@ function EventDetailContent() {
                         Descrição do Pacote: {selectedPkg.name}
                       </span>
                       {selectedPkg.price > 0 && (
-                        <span className="font-bold text-[#8B6E3F] font-serif-brand">
+                        <span className="font-semibold text-[#8B6E3F] font-sans tabular-nums tracking-tight">
                           {formatCurrency(selectedPkg.price)}
                         </span>
                       )}

@@ -814,7 +814,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                       Descrição do Pacote: {selectedPkg.name}
                     </span>
                     {selectedPkg.price > 0 && (
-                      <span className="font-bold text-[#8B6E3F] font-serif-brand">
+                      <span className="font-semibold text-[#8B6E3F] font-sans tabular-nums tracking-tight">
                         R$ {selectedPkg.price.toLocaleString('pt-BR')}
                       </span>
                     )}

@@ -205,7 +205,7 @@ export default function CRMPage() {
                         </h4>
 
                         <div className="flex items-center justify-between text-xs pt-1 border-t border-zinc-100">
-                          <span className="font-bold text-zinc-900 font-serif-brand">
+                          <span className="font-semibold text-zinc-900 font-sans tabular-nums tracking-tight">
                             {formatCurrency(lead.estimated_value)}
                           </span>
                           <span className="text-[10px] text-zinc-500 flex items-center gap-1">
@@ -253,7 +253,7 @@ export default function CRMPage() {
                 </div>
                 <div className="text-right">
                   <span className="text-[10px] text-zinc-400 block">Valor Estimado</span>
-                  <span className="text-base font-bold text-zinc-900 font-serif-brand">
+                  <span className="text-base font-bold text-zinc-900 font-sans tabular-nums tracking-tight">
                     {formatCurrency(selectedLead.estimated_value)}
                   </span>
                 </div>

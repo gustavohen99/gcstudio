@@ -247,7 +247,7 @@ function DashboardContent() {
               </div>
             </div>
             <div className="mt-2 sm:mt-3">
-              <div className="text-xl sm:text-2xl font-semibold text-zinc-900 font-serif-brand">
+              <div className="text-xl sm:text-2xl font-semibold text-zinc-900 font-sans tabular-nums tracking-tight">
                 {activeEvents.length}
               </div>
               <p className="text-[11px] text-zinc-400 mt-0.5">confirmados na temporada</p>
@@ -270,7 +270,7 @@ function DashboardContent() {
               </div>
             </div>
             <div className="mt-2 sm:mt-3">
-              <div className="text-lg sm:text-2xl font-semibold text-zinc-900 font-serif-brand truncate">
+              <div className="text-lg sm:text-2xl font-semibold text-zinc-900 font-sans tabular-nums tracking-tight truncate">
                 {formatCurrency(toReceive)}
               </div>
               <p className="text-[11px] text-zinc-400 mt-0.5">{pendingPayments.length} parcelas abertas</p>
@@ -293,7 +293,7 @@ function DashboardContent() {
               </div>
             </div>
             <div className="mt-2 sm:mt-3">
-              <div className="text-xl sm:text-2xl font-semibold text-zinc-900 font-serif-brand">
+              <div className="text-xl sm:text-2xl font-semibold text-zinc-900 font-sans tabular-nums tracking-tight">
                 {pendingDeliveries.length}
               </div>
               <p className="text-[11px] text-zinc-400 mt-0.5">álbuns, vídeos e fotos</p>

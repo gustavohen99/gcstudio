@@ -182,7 +182,7 @@ export default function QuotesPage() {
                   <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-zinc-100">
                     <div>
                       <span className="text-zinc-400 block text-[11px]">Valor Total</span>
-                      <span className="text-base font-bold text-zinc-900 font-serif-brand">
+                      <span className="text-base font-bold text-zinc-900 font-sans tabular-nums tracking-tight">
                         {formatCurrency(quote.total_value)}
                       </span>
                     </div>
