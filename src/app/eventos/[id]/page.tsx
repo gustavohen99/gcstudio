@@ -13,7 +13,6 @@ import {
   getPaymentStatusConfig,
   getWhatsAppUrl,
   getBriefingStatusConfig,
-  getDeliveryStatusConfig,
   resolveEventPackage,
   getPackagesForEventType,
   getServicesForEventType,
@@ -36,20 +35,16 @@ import {
   DollarSign,
   FileText,
   Image as ImageIcon,
-  Truck,
-  FolderOpen,
-  History,
   ClipboardList,
   Sparkles,
   Share2,
-  Printer,
   Settings,
   Check,
   Package as PackageIcon,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
-import { EventStatus, DeliveryStatus, EventType, EventAddon, EventExtraSession } from '@/types';
+import { EventStatus, EventType, EventAddon, EventExtraSession } from '@/types';
 
 function EventDetailContent() {
   const params = useParams();
@@ -65,9 +60,7 @@ function EventDetailContent() {
     timelines,
     briefings,
     payments,
-    contracts,
     galleries,
-    deliveries,
     updateEvent,
     deleteEvent,
     toggleChecklistTask,
@@ -77,9 +70,6 @@ function EventDetailContent() {
     deleteTimelineMoment,
     addPayment,
     updatePayment,
-    addDelivery,
-    updateDelivery,
-    updateContract,
   } = useAppStore();
 
   const event = events.find((e) => e.id === eventId);
@@ -99,11 +89,7 @@ function EventDetailContent() {
     | 'cronograma'
     | 'checklist'
     | 'financeiro'
-    | 'contrato'
     | 'galeria'
-    | 'entregas'
-    | 'documentos'
-    | 'historico'
   >('resumo');
 
   // Event configuration modal state
@@ -142,15 +128,6 @@ function EventDetailContent() {
     notes: '',
   });
 
-  // Delivery add modal
-  const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
-  const [deliveryForm, setDeliveryForm] = useState({
-    name: 'Fotografias em Alta Resolução',
-    deadline: '',
-    notes: '',
-    status: 'a_fazer' as DeliveryStatus,
-  });
-
   if (!event) {
     return (
       <AppShell>
@@ -175,9 +152,7 @@ function EventDetailContent() {
     .sort((a, b) => a.time.localeCompare(b.time));
   const eventBriefing = briefings.find((b) => b.event_id === event.id);
   const eventPayments = payments.filter((p) => p.event_id === event.id);
-  const eventContracts = contracts.filter((c) => c.event_id === event.id);
   const eventGalleries = galleries.filter((g) => g.event_id === event.id);
-  const eventDeliveries = deliveries.filter((d) => d.event_id === event.id);
 
   const statusCfg = getEventStatusConfig(event.status);
 
@@ -331,24 +306,6 @@ function EventDetailContent() {
     toast('Momento incluído no cronograma!', 'success');
   };
 
-  const handleAddDelivery = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!deliveryForm.deadline) {
-      toast('Informe o prazo da entrega.', 'error');
-      return;
-    }
-    addDelivery({
-      event_id: event.id,
-      event_name: event.name,
-      name: deliveryForm.name,
-      deadline: deliveryForm.deadline,
-      notes: deliveryForm.notes,
-      status: deliveryForm.status,
-    });
-    setDeliveryModalOpen(false);
-    toast('Entrega registrada para a produção!', 'success');
-  };
-
   const copyBriefingLink = () => {
     if (!eventBriefing) return;
     const url = `${window.location.origin}/briefing/${eventBriefing.token}`;
@@ -475,7 +432,7 @@ function EventDetailContent() {
           </div>
         </div>
 
-        {/* 10 Abas do Evento */}
+        {/* Abas do Evento */}
         <div className="border-b border-zinc-200 flex gap-1 sm:gap-2 overflow-x-auto text-xs font-medium">
           {[
             { id: 'resumo', label: 'Resumo', icon: Sparkles },
@@ -483,11 +440,7 @@ function EventDetailContent() {
             { id: 'cronograma', label: `Cronograma (${eventTimeline.length})`, icon: Clock },
             { id: 'checklist', label: `Checklist (${eventChecklist.filter(c => c.is_completed).length}/${eventChecklist.length})`, icon: CheckCircle2 },
             { id: 'financeiro', label: `Financeiro (${eventPayments.length})`, icon: DollarSign },
-            { id: 'contrato', label: `Contrato (${eventContracts.length})`, icon: FileText },
             { id: 'galeria', label: `Galeria (${eventGalleries.length})`, icon: ImageIcon },
-            { id: 'entregas', label: `Entregas (${eventDeliveries.length})`, icon: Truck },
-            { id: 'documentos', label: 'Documentos', icon: FolderOpen },
-            { id: 'historico', label: 'Histórico', icon: History },
           ].map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
@@ -1191,83 +1144,7 @@ function EventDetailContent() {
             </div>
           )}
 
-          {/* 6. CONTRATO (Item 12) */}
-          {activeTab === 'contrato' && (
-            <div className="p-6 bg-white rounded-2xl border border-[#EAEAE4] space-y-4 text-xs">
-              <h3 className="text-sm font-semibold text-zinc-900">Contrato de Prestação de Serviços</h3>
-              {eventContracts.length === 0 ? (
-                <div className="p-8 text-center text-zinc-400">
-                  Nenhum contrato gerado para este evento.
-                </div>
-              ) : (
-                eventContracts.map((c) => (
-                  <div key={c.id} className="space-y-3">
-                    <div className="flex items-center justify-between pb-3 border-b border-zinc-100 flex-wrap gap-2">
-                      <div>
-                        <span className="font-semibold text-zinc-900">{c.template_title}</span>
-                        <p className="text-zinc-500 mt-0.5">
-                          Status: <strong className="capitalize">{c.status}</strong>
-                          {c.signed_at && ` • Assinado em ${formatDate(c.signed_at)}`}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {/* WhatsApp send button */}
-                        <button
-                          onClick={() => {
-                            if (!client?.whatsapp) {
-                              toast('Cliente sem WhatsApp cadastrado.', 'error');
-                              return;
-                            }
-                            const msg = `Olá, ${client.name}! Tudo bem?\n\nAqui é da G&C Studio. Segue o contrato de prestação de serviços referente ao seu evento "${event.name}".\n\n${
-                              c.external_url ? `Link para assinatura digital:\n${c.external_url}\n\n` : ''
-                            }Ficamos à disposição para quaisquer dúvidas e para confirmar a reserva oficial!\n\nG&C Studio • Fotografia & Cinema`;
-                            window.open(getWhatsAppUrl(client.whatsapp, msg), '_blank');
-                            if (c.status === 'rascunho') updateContract(c.id, { status: 'enviado' });
-                            toast('WhatsApp aberto para envio do contrato!', 'success');
-                          }}
-                          className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors flex items-center gap-1.5 font-medium cursor-pointer"
-                        >
-                          <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>Enviar WhatsApp</span>
-                        </button>
-
-                        {/* Print / Save PDF button */}
-                        <button
-                          onClick={() => window.print()}
-                          className="px-3 py-1.5 rounded-xl bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 transition-colors flex items-center gap-1.5 font-medium cursor-pointer"
-                        >
-                          <Printer className="w-3.5 h-3.5 text-[#C5A880]" />
-                          <span>Imprimir / PDF</span>
-                        </button>
-
-                        {c.external_url && (
-                          <a
-                            href={c.external_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-3 py-1.5 rounded-xl bg-[#C5A880]/15 text-[#8B6E3F] border border-[#C5A880]/30 transition-colors flex items-center gap-1.5 font-medium"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            <span>Assinar Online</span>
-                          </a>
-                        )}
-
-                        <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-medium">
-                          {c.status}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="p-4 bg-zinc-50 rounded-xl font-mono text-[11px] text-zinc-700 leading-relaxed whitespace-pre-wrap">
-                      {c.content}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-
-          {/* 7. GALERIA (Item 19) */}
+          {/* 6. GALERIA (Item 19) */}
           {activeTab === 'galeria' && (
             <div className="space-y-4">
               {eventGalleries.length === 0 ? (
@@ -1310,87 +1187,6 @@ function EventDetailContent() {
                   </div>
                 ))
               )}
-            </div>
-          )}
-
-          {/* 8. ENTREGAS (Item 20) */}
-          {activeTab === 'entregas' && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold text-zinc-900">Entregas do Evento</h3>
-                  <p className="text-xs text-zinc-500">
-                    Controle de prazos de edição, teasers, filmes e álbuns
-                  </p>
-                </div>
-                <button
-                  onClick={() => setDeliveryModalOpen(true)}
-                  className="px-3.5 py-1.5 rounded-xl bg-zinc-900 text-white text-xs font-medium flex items-center gap-1"
-                >
-                  <Plus className="w-3.5 h-3.5 text-[#C5A880]" />
-                  <span>+ Nova Entrega</span>
-                </button>
-              </div>
-
-              {eventDeliveries.length === 0 ? (
-                <div className="p-8 text-center bg-white rounded-2xl border border-[#EAEAE4] text-xs text-zinc-400">
-                  Nenhuma entrega cadastrada para este evento.
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {eventDeliveries.map((del) => {
-                    const delCfg = getDeliveryStatusConfig(del.status);
-                    return (
-                      <div
-                        key={del.id}
-                        className="p-4 rounded-2xl bg-white border border-[#EAEAE4] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
-                      >
-                        <div>
-                          <span className="font-semibold text-zinc-900">{del.name}</span>
-                          <p className="text-zinc-500 mt-0.5">
-                            Prazo: {formatDate(del.deadline)} {del.notes && `• ${del.notes}`}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <select
-                            value={del.status}
-                            onChange={(e) =>
-                              updateDelivery(del.id, {
-                                status: e.target.value as DeliveryStatus,
-                              })
-                            }
-                            className={`px-2.5 py-1 rounded-xl text-[11px] font-medium border border-zinc-200 bg-white ${delCfg.color}`}
-                          >
-                            <option value="a_fazer">A Fazer</option>
-                            <option value="em_producao">Em Produção</option>
-                            <option value="em_revisao">Em Revisão</option>
-                            <option value="pronto">Pronto</option>
-                            <option value="entregue">Entregue</option>
-                          </select>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* 9. DOCUMENTOS (Item 21) */}
-          {activeTab === 'documentos' && (
-            <div className="p-8 text-center bg-white rounded-2xl border border-[#EAEAE4] text-xs text-zinc-400 space-y-2">
-              <FolderOpen className="w-8 h-8 text-zinc-300 mx-auto" />
-              <p>Nenhum documento anexado ainda a este evento.</p>
-            </div>
-          )}
-
-          {/* 10. HISTÓRICO */}
-          {activeTab === 'historico' && (
-            <div className="p-6 bg-white rounded-2xl border border-[#EAEAE4] space-y-3 text-xs text-zinc-600">
-              <div className="flex items-center gap-3">
-                <span className="w-2 h-2 rounded-full bg-[#C5A880]" />
-                <span>Evento criado e registrado no sistema em {formatDate(event.created_at)}</span>
-              </div>
             </div>
           )}
         </div>
@@ -1473,68 +1269,6 @@ function EventDetailContent() {
                 className="px-5 py-2 rounded-xl bg-zinc-900 text-white font-medium"
               >
                 Adicionar ao Cronograma
-              </button>
-            </div>
-          </form>
-        </Modal>
-
-        {/* Modal Adicionar Entrega */}
-        <Modal
-          isOpen={deliveryModalOpen}
-          onClose={() => setDeliveryModalOpen(false)}
-          title="Nova Entrega do Evento"
-        >
-          <form onSubmit={handleAddDelivery} className="space-y-4 text-xs">
-            <div>
-              <label className="block font-medium text-zinc-700 mb-1">Item da Entrega *</label>
-              <select
-                value={deliveryForm.name}
-                onChange={(e) => setDeliveryForm({ ...deliveryForm, name: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900 bg-white"
-              >
-                <option value="Fotografias em Alta Resolução">Fotografias em Alta Resolução</option>
-                <option value="Vídeo Teaser (Instagram)">Vídeo Teaser (Instagram)</option>
-                <option value="Filme Completo Documental">Filme Completo Documental</option>
-                <option value="Reels Making Of">Reels Making Of</option>
-                <option value="Álbum Fine Art">Álbum Fine Art</option>
-                <option value="Quadro de Recepção">Quadro de Recepção</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block font-medium text-zinc-700 mb-1">Prazo de Conclusão *</label>
-              <input
-                type="date"
-                required
-                value={deliveryForm.deadline}
-                onChange={(e) => setDeliveryForm({ ...deliveryForm, deadline: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900"
-              />
-            </div>
-
-            <div>
-              <label className="block font-medium text-zinc-700 mb-1">Observações</label>
-              <input
-                type="text"
-                value={deliveryForm.notes}
-                onChange={(e) => setDeliveryForm({ ...deliveryForm, notes: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900"
-              />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setDeliveryModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-700"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="px-5 py-2 rounded-xl bg-zinc-900 text-white font-medium"
-              >
-                Salvar Entrega
               </button>
             </div>
           </form>
