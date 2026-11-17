@@ -484,6 +484,17 @@ export const useAppStore = () => {
         updated_at: nowIso,
       };
 
+      const addonsNote =
+        newEvent.addons && newEvent.addons.length > 0
+          ? `Adicionais: ${newEvent.addons.map((a) => a.name).join(', ')}`
+          : '';
+      const paymentNotes = [
+        newEvent.package_name ? `Pacote: ${newEvent.package_name}` : '',
+        addonsNote,
+      ]
+        .filter(Boolean)
+        .join(' | ');
+
       // Automação Financeira: Lançar automaticamente entrada e saldo no Financeiro
       const autoPayments: Payment[] = [];
       if (depositValue > 0) {
@@ -499,7 +510,7 @@ export const useAppStore = () => {
           status: newEvent.deposit_paid ? 'pago' : 'pendente',
           paid_at: newEvent.deposit_paid ? nowIso : undefined,
           payment_method: 'PIX',
-          notes: newEvent.package_name ? `Pacote: ${newEvent.package_name}` : undefined,
+          notes: paymentNotes || undefined,
           created_at: nowIso,
         });
       }
@@ -516,7 +527,7 @@ export const useAppStore = () => {
           due_date: newEvent.date || todayStr,
           status: 'pendente',
           payment_method: 'PIX',
-          notes: newEvent.package_name ? `Pacote: ${newEvent.package_name}` : undefined,
+          notes: paymentNotes || undefined,
           created_at: nowIso,
         });
       }

@@ -415,3 +415,48 @@ export function resolveEventPackage(
     is_custom: true,
   };
 }
+
+/**
+ * Filtra pacotes pertencentes à categoria do tipo de evento informado.
+ * Pacotes inativos são omitidos; se nenhum pacote tiver essa categoria, retorna [].
+ */
+export function getPackagesForEventType<T extends { category?: string; is_active?: boolean }>(
+  packages: T[],
+  eventType?: string
+): T[] {
+  const active = packages.filter((p) => p.is_active !== false);
+  if (!eventType) return active;
+  const normType = eventType.trim().toLowerCase();
+  return active.filter((p) => (p.category || '').trim().toLowerCase() === normType);
+}
+
+/**
+ * Filtra serviços adicionais compatíveis com o tipo de evento informado.
+ */
+export function getServicesForEventType<
+  T extends { name: string; category?: string; is_active?: boolean }
+>(services: T[], eventType?: string): T[] {
+  const active = services.filter((s) => s.is_active !== false);
+  if (!eventType) return active;
+  const normType = eventType.trim().toLowerCase();
+
+  if (normType === '15 anos') {
+    return active.filter((s) => {
+      const cat = (s.category || '').trim().toLowerCase();
+      if (cat === '15 anos') return true;
+      return cat === 'adicionais' && !s.name.toLowerCase().includes('noiva');
+    });
+  }
+
+  if (normType === 'casamento') {
+    return active.filter((s) => {
+      const cat = (s.category || '').trim().toLowerCase();
+      return cat === 'casamento' || cat === 'adicionais';
+    });
+  }
+
+  return active.filter((s) => {
+    const cat = (s.category || '').trim().toLowerCase();
+    return cat === normType || cat === 'adicionais';
+  });
+}

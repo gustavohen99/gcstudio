@@ -12,9 +12,18 @@ import {
   FileSpreadsheet,
   Image as ImageIcon,
   Truck,
+  Check,
+  Sparkles,
 } from 'lucide-react';
 import { EventType, LeadStatus } from '@/types';
-import { formatPhoneInput, extractNationalDigits, resolveEventPackage, sortEventsByProximity } from '@/lib/utils';
+import {
+  formatPhoneInput,
+  extractNationalDigits,
+  resolveEventPackage,
+  sortEventsByProximity,
+  getPackagesForEventType,
+  getServicesForEventType,
+} from '@/lib/utils';
 
 interface QuickCreateModalProps {
   isOpen: boolean;
@@ -33,6 +42,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
     clients,
     events,
     packages,
+    services,
     addClient,
     addLead,
     addEvent,
@@ -72,7 +82,11 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
     status: 'NOVO CONTATO' as LeadStatus,
   });
 
+  const initialWeddingPackages = getPackagesForEventType(packages, 'Casamento');
+  const firstDefaultPkg = initialWeddingPackages[0] || packages[0];
+
   // Event form state
+  const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
   const [eventForm, setEventForm] = useState({
     client_id: '',
     name: '',
@@ -80,17 +94,85 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
     date: '',
     time: '16:00',
     location: '',
-    package_name: packages[0]?.name || 'PACOTE 1 — Fotografia',
-    package_id: packages[0]?.id || 'pkg-1',
+    package_name: firstDefaultPkg?.name || 'PACOTE 1 — Fotografia',
+    package_id: firstDefaultPkg?.id || 'pkg-1',
     package_description:
-      packages[0]?.description ||
+      firstDefaultPkg?.description ||
       'Cobertura da Cerimônia + Recepção + 1h festa. Todas as fotos em alta resolução.',
-    value: packages[0]?.price || 1000,
+    value: firstDefaultPkg?.price || 1000,
     deposit_value: 300,
     deposit_paid: true,
     description: '',
     notes: '',
   });
+
+  const filteredEventPackages = React.useMemo(
+    () => getPackagesForEventType(packages, eventForm.type),
+    [packages, eventForm.type]
+  );
+
+  const availableEventServices = React.useMemo(
+    () => getServicesForEventType(services, eventForm.type),
+    [services, eventForm.type]
+  );
+
+  const selectedAddonsList = React.useMemo(
+    () => services.filter((s) => selectedAddonIds.includes(s.id)),
+    [services, selectedAddonIds]
+  );
+
+  const addonsTotal = React.useMemo(
+    () => selectedAddonsList.reduce((acc, s) => acc + (Number(s.price) || 0), 0),
+    [selectedAddonsList]
+  );
+
+  const handleEventTypeSelect = (
+    nextType: EventType,
+    extraUpdates?: { client_id?: string; name?: string }
+  ) => {
+    const typePkgs = getPackagesForEventType(packages, nextType);
+    const validSrvs = getServicesForEventType(services, nextType);
+    const nextAddonIds = selectedAddonIds.filter((id) => validSrvs.some((s) => s.id === id));
+    const nextAddonsTotal = services
+      .filter((s) => nextAddonIds.includes(s.id))
+      .reduce((acc, s) => acc + (Number(s.price) || 0), 0);
+
+    setSelectedAddonIds(nextAddonIds);
+    const firstPkg = typePkgs[0];
+    setEventForm((prev) => ({
+      ...prev,
+      ...(extraUpdates || {}),
+      type: nextType,
+      ...(firstPkg
+        ? {
+            package_name: firstPkg.name,
+            package_id: firstPkg.id,
+            package_description: firstPkg.description,
+            value: (Number(firstPkg.price) || 0) + nextAddonsTotal,
+          }
+        : {
+            package_name: 'Personalizado',
+            package_id: '',
+            package_description: 'Pacote com especificações e entregas customizadas para este evento.',
+            value: nextAddonsTotal,
+          }),
+    }));
+  };
+
+  const toggleEventAddon = (srv: { id: string; price: number }) => {
+    const isSelected = selectedAddonIds.includes(srv.id);
+    const nextIds = isSelected
+      ? selectedAddonIds.filter((id) => id !== srv.id)
+      : [...selectedAddonIds, srv.id];
+    setSelectedAddonIds(nextIds);
+    setEventForm((prev) => ({
+      ...prev,
+      value: Math.max(
+        0,
+        (Number(prev.value) || 0) + (isSelected ? -Number(srv.price || 0) : Number(srv.price || 0))
+      ),
+    }));
+  };
 
   // Quote form state
   const [quoteForm, setQuoteForm] = useState({
@@ -188,9 +270,15 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
       package_name: eventForm.package_name || resolved.name,
       package_id: eventForm.package_id || resolved.id,
       package_description: eventForm.package_description || resolved.description,
+      addons: selectedAddonsList.map((s) => ({
+        id: s.id,
+        name: s.name,
+        price: Number(s.price) || 0,
+      })),
       client_name: selectedClient ? selectedClient.name : 'Cliente',
       status: 'confirmado',
     });
+    setSelectedAddonIds([]);
     toast('Evento criado e valores lançados automaticamente no Financeiro!', 'success');
     onClose();
   };
@@ -551,7 +639,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
         {/* EVENT FORM */}
         {activeTab === 'event' && (
           <form onSubmit={handleEventSubmit} className="space-y-4 text-xs">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block font-medium text-zinc-700 mb-1">Vincular a Cliente *</label>
                 <select
@@ -559,23 +647,14 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                   value={eventForm.client_id}
                   onChange={(e) => {
                     const c = clients.find((cli) => cli.id === e.target.value);
-                    const categoryPkg = c
-                      ? packages.find((p) => p.category === c.event_type)
-                      : undefined;
-                    setEventForm({
-                      ...eventForm,
-                      client_id: e.target.value,
-                      name: c ? c.name : eventForm.name,
-                      type: c ? c.event_type : eventForm.type,
-                      ...(categoryPkg
-                        ? {
-                            package_name: categoryPkg.name,
-                            package_id: categoryPkg.id,
-                            package_description: categoryPkg.description,
-                            value: categoryPkg.price,
-                          }
-                        : {}),
-                    });
+                    if (c) {
+                      handleEventTypeSelect(c.event_type, {
+                        client_id: e.target.value,
+                        name: c.name,
+                      });
+                    } else {
+                      setEventForm({ ...eventForm, client_id: e.target.value });
+                    }
                   }}
                   className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900 bg-white focus:outline-hidden focus:border-[#C5A880]"
                 >
@@ -585,6 +664,23 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                       {c.name} ({c.event_type})
                     </option>
                   ))}
+                </select>
+              </div>
+              <div>
+                <label className="block font-medium text-zinc-700 mb-1">Tipo de Evento</label>
+                <select
+                  value={eventForm.type}
+                  onChange={(e) => handleEventTypeSelect(e.target.value as EventType)}
+                  className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900 bg-white focus:outline-hidden focus:border-[#C5A880]"
+                >
+                  <option value="Casamento">Casamento</option>
+                  <option value="15 anos">15 anos</option>
+                  <option value="Formatura">Formatura</option>
+                  <option value="Ensaio">Ensaio</option>
+                  <option value="Aniversário">Aniversário</option>
+                  <option value="Corporativo">Corporativo</option>
+                  <option value="Esportivo">Esportivo</option>
+                  <option value="Outro">Outro</option>
                 </select>
               </div>
               <div>
@@ -602,22 +698,34 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block font-medium text-zinc-700 mb-1">Pacote Escolhido</label>
+                <label className="block font-medium text-zinc-700 mb-1">
+                  Pacote Escolhido ({eventForm.type})
+                </label>
                 <select
                   value={eventForm.package_name}
                   onChange={(e) => {
-                    const pkgInfo = resolveEventPackage(packages, e.target.value);
-                    setEventForm({
-                      ...eventForm,
+                    if (e.target.value === 'Personalizado') {
+                      setEventForm((prev) => ({
+                        ...prev,
+                        package_name: 'Personalizado',
+                        package_id: '',
+                        package_description:
+                          'Pacote com especificações e entregas customizadas para este evento.',
+                      }));
+                      return;
+                    }
+                    const pkgInfo = resolveEventPackage(filteredEventPackages, e.target.value);
+                    setEventForm((prev) => ({
+                      ...prev,
                       package_name: pkgInfo.name,
                       package_id: pkgInfo.id || '',
                       package_description: pkgInfo.description,
-                      value: pkgInfo.price || eventForm.value,
-                    });
+                      value: (Number(pkgInfo.price) || 0) + addonsTotal,
+                    }));
                   }}
                   className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900 bg-white focus:outline-hidden focus:border-[#C5A880]"
                 >
-                  {packages.map((p) => (
+                  {filteredEventPackages.map((p) => (
                     <option key={p.id} value={p.name}>
                       {p.name} (R$ {p.price.toLocaleString('pt-BR')})
                     </option>
@@ -675,6 +783,66 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                 </div>
               );
             })()}
+
+            {/* Serviços Adicionais */}
+            {availableEventServices.length > 0 && (
+              <div className="p-3.5 rounded-2xl bg-[#FBFBF9] border border-[#EAEAE4] space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-zinc-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#C5A880]" />
+                    Adicionais (soma automática no valor total)
+                  </span>
+                  {addonsTotal > 0 && (
+                    <span className="text-[11px] font-semibold text-[#8B6E3F]">
+                      + R$ {addonsTotal.toLocaleString('pt-BR')} em adicionais
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {availableEventServices.map((srv) => {
+                    const checked = selectedAddonIds.includes(srv.id);
+                    return (
+                      <button
+                        key={srv.id}
+                        type="button"
+                        onClick={() => toggleEventAddon(srv)}
+                        className={`text-left p-2.5 rounded-xl border transition-all flex items-start justify-between gap-2 cursor-pointer ${
+                          checked
+                            ? 'bg-amber-50/70 border-[#C5A880] shadow-2xs'
+                            : 'bg-white border-zinc-200 hover:border-zinc-300'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2 min-w-0">
+                          <span
+                            className={`mt-0.5 w-4 h-4 rounded-md border flex items-center justify-center shrink-0 ${
+                              checked
+                                ? 'bg-[#C5A880] border-[#C5A880] text-zinc-950'
+                                : 'border-zinc-300 bg-white'
+                            }`}
+                          >
+                            {checked && <Check className="w-3 h-3 stroke-[3]" />}
+                          </span>
+                          <div className="min-w-0">
+                            <span className="font-semibold text-zinc-900 block truncate">
+                              {srv.name}
+                            </span>
+                            {srv.description && (
+                              <span className="text-[11px] text-zinc-500 line-clamp-1 block">
+                                {srv.description}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <span className="font-semibold text-[#8B6E3F] whitespace-nowrap shrink-0">
+                          + R$ {srv.price.toLocaleString('pt-BR')}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Descrição do Evento */}
             <div>

@@ -15,6 +15,8 @@ import {
   getBriefingStatusConfig,
   getDeliveryStatusConfig,
   resolveEventPackage,
+  getPackagesForEventType,
+  getServicesForEventType,
 } from '@/lib/utils';
 import {
   Calendar,
@@ -45,7 +47,7 @@ import {
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
-import { EventStatus, DeliveryStatus, EventType } from '@/types';
+import { EventStatus, DeliveryStatus, EventType, EventAddon } from '@/types';
 
 function EventDetailContent() {
   const params = useParams();
@@ -56,6 +58,7 @@ function EventDetailContent() {
     events,
     clients,
     packages,
+    services,
     checklists,
     timelines,
     briefings,
@@ -112,6 +115,7 @@ function EventDetailContent() {
     package_name: '',
     package_id: '',
     package_description: '',
+    addons: [] as EventAddon[],
     value: 0,
     deposit_value: 0,
     deposit_paid: true,
@@ -217,6 +221,7 @@ function EventDetailContent() {
       package_name: event.package_name || resolved.name,
       package_id: event.package_id || resolved.id || '',
       package_description: event.package_description || resolved.description,
+      addons: event.addons ? [...event.addons] : [],
       value: event.value || 0,
       deposit_value: event.deposit_value ?? (depPayment ? depPayment.amount : 0),
       deposit_paid:
@@ -248,6 +253,7 @@ function EventDetailContent() {
       package_name: configForm.package_name || resolved.name,
       package_id: configForm.package_id || resolved.id || undefined,
       package_description: configForm.package_description || resolved.description,
+      addons: configForm.addons,
       value: Number(configForm.value) || 0,
       deposit_value: Number(configForm.deposit_value) || 0,
       deposit_paid: configForm.deposit_paid,
@@ -259,16 +265,27 @@ function EventDetailContent() {
   };
 
   const handlePackageChange = (newPackageName: string) => {
+    const addonsTotal = (event.addons || []).reduce((acc, a) => acc + (Number(a.price) || 0), 0);
+    if (newPackageName === 'Personalizado') {
+      updateEvent(event.id, {
+        package_name: 'Personalizado',
+        package_id: undefined,
+        package_description: 'Pacote com especificações e entregas customizadas para este evento.',
+      });
+      toast('Pacote definido como Personalizado.', 'info');
+      return;
+    }
     const pkg = resolveEventPackage(packages, newPackageName);
     if (!pkg.is_custom) {
+      const nextTotal = (Number(pkg.price) || 0) + addonsTotal;
       updateEvent(event.id, {
         package_name: pkg.name,
         package_id: pkg.id,
         package_description: pkg.description,
-        value: pkg.price,
+        value: nextTotal,
       });
       toast(
-        `Pacote alterado para "${pkg.name}" (${formatCurrency(pkg.price)}) e atualizado no Financeiro!`,
+        `Pacote alterado para "${pkg.name}" (Total: ${formatCurrency(nextTotal)}) e atualizado no Financeiro!`,
         'success'
       );
     } else {
@@ -437,6 +454,20 @@ function EventDetailContent() {
                     ))}
                   </div>
                 )}
+
+                {event.addons && event.addons.length > 0 && (
+                  <div className="pt-1.5 border-t border-amber-200/50 flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-700">
+                    <span className="font-semibold text-[#8B6E3F]">Adicionais:</span>
+                    {event.addons.map((addon) => (
+                      <span
+                        key={addon.id}
+                        className="px-2 py-0.5 rounded-md bg-white border border-amber-200/70 text-zinc-800"
+                      >
+                        {addon.name} (+{formatCurrency(addon.price)})
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -541,29 +572,47 @@ function EventDetailContent() {
                       <span className="font-semibold text-zinc-800">{event.client_name}</span>
                     </div>
                     <div>
-                      <label className="text-zinc-400 block mb-1">Pacote Escolhido (Alterar Pacote)</label>
-                      <select
-                        value={
-                          packages.some((p) => p.name === event.package_name)
-                            ? event.package_name
-                            : currentPackageInfo?.name && packages.some((p) => p.name === currentPackageInfo.name)
-                            ? currentPackageInfo.name
-                            : 'Personalizado'
-                        }
-                        onChange={(e) => handlePackageChange(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-xl border border-zinc-200 bg-zinc-50 font-semibold text-zinc-800 focus:outline-hidden focus:border-[#C5A880]"
-                      >
-                        {packages.map((pkg) => (
-                          <option key={pkg.id} value={pkg.name}>
-                            {pkg.name} ({formatCurrency(pkg.price)})
-                          </option>
-                        ))}
-                        <option value="Personalizado">
-                          {event.package_name && !packages.some((p) => p.name === event.package_name)
-                            ? `${event.package_name} (Personalizado)`
-                            : 'Personalizado'}
-                        </option>
-                      </select>
+                      <label className="text-zinc-400 block mb-1">
+                        Pacote Escolhido ({event.type} — Alterar Pacote)
+                      </label>
+                      {(() => {
+                        const typePackages = getPackagesForEventType(packages, event.type);
+                        const selectOptions =
+                          currentPackageInfo &&
+                          !currentPackageInfo.is_custom &&
+                          !typePackages.some((p) => p.name === currentPackageInfo.name)
+                            ? [
+                                ...typePackages,
+                                ...(packages.filter((p) => p.name === currentPackageInfo.name)),
+                              ]
+                            : typePackages;
+
+                        return (
+                          <select
+                            value={
+                              selectOptions.some((p) => p.name === event.package_name)
+                                ? event.package_name
+                                : currentPackageInfo?.name &&
+                                  selectOptions.some((p) => p.name === currentPackageInfo.name)
+                                ? currentPackageInfo.name
+                                : 'Personalizado'
+                            }
+                            onChange={(e) => handlePackageChange(e.target.value)}
+                            className="w-full px-3 py-1.5 rounded-xl border border-zinc-200 bg-zinc-50 font-semibold text-zinc-800 focus:outline-hidden focus:border-[#C5A880]"
+                          >
+                            {selectOptions.map((pkg) => (
+                              <option key={pkg.id} value={pkg.name}>
+                                {pkg.name} ({formatCurrency(pkg.price)})
+                              </option>
+                            ))}
+                            <option value="Personalizado">
+                              {event.package_name && !selectOptions.some((p) => p.name === event.package_name)
+                                ? `${event.package_name} (Personalizado)`
+                                : 'Personalizado'}
+                            </option>
+                          </select>
+                        );
+                      })()}
                     </div>
                     <div>
                       <span className="text-zinc-400 block mb-0.5">Data e Horário</span>
@@ -605,6 +654,23 @@ function EventDetailContent() {
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                               <span>{feat}</span>
                             </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {event.addons && event.addons.length > 0 && (
+                      <div className="pt-2 border-t border-amber-200/50 space-y-1">
+                        <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
+                          Serviços Adicionais Contratados:
+                        </span>
+                        <div className="flex flex-wrap gap-1.5 pt-0.5">
+                          {event.addons.map((addon) => (
+                            <span
+                              key={addon.id}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-amber-200/70 text-[11px] font-medium text-zinc-800"
+                            >
+                              {addon.name} ({formatCurrency(addon.price)})
+                            </span>
                           ))}
                         </div>
                       </div>
@@ -1569,7 +1635,38 @@ function EventDetailContent() {
                 <label className="block font-medium text-zinc-700 mb-1">Tipo de Evento</label>
                 <select
                   value={configForm.type}
-                  onChange={(e) => setConfigForm({ ...configForm, type: e.target.value as EventType })}
+                  onChange={(e) => {
+                    const nextType = e.target.value as EventType;
+                    const typePkgs = getPackagesForEventType(packages, nextType);
+                    const validSrvs = getServicesForEventType(services, nextType);
+                    const nextAddons = configForm.addons.filter((a) =>
+                      validSrvs.some((s) => s.id === a.id)
+                    );
+                    const nextAddonsSum = nextAddons.reduce(
+                      (acc, a) => acc + (Number(a.price) || 0),
+                      0
+                    );
+                    const firstPkg = typePkgs[0];
+                    setConfigForm({
+                      ...configForm,
+                      type: nextType,
+                      addons: nextAddons,
+                      ...(firstPkg
+                        ? {
+                            package_name: firstPkg.name,
+                            package_id: firstPkg.id,
+                            package_description: firstPkg.description,
+                            value: (Number(firstPkg.price) || 0) + nextAddonsSum,
+                          }
+                        : {
+                            package_name: 'Personalizado',
+                            package_id: '',
+                            package_description:
+                              'Pacote com especificações e entregas customizadas para este evento.',
+                            value: nextAddonsSum,
+                          }),
+                    });
+                  }}
                   className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900 bg-white"
                 >
                   <option value="Casamento">Casamento</option>
@@ -1585,28 +1682,49 @@ function EventDetailContent() {
             </div>
 
             <div>
-              <label className="block font-medium text-zinc-700 mb-1">Pacote Escolhido</label>
-              <select
-                value={configForm.package_name}
-                onChange={(e) => {
-                  const pkgInfo = resolveEventPackage(packages, e.target.value);
-                  setConfigForm({
-                    ...configForm,
-                    package_name: pkgInfo.name,
-                    package_id: pkgInfo.id || '',
-                    package_description: pkgInfo.description,
-                    value: pkgInfo.price || configForm.value,
-                  });
-                }}
-                className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900 bg-white font-medium"
-              >
-                {packages.map((pkg) => (
-                  <option key={pkg.id} value={pkg.name}>
-                    {pkg.name} ({formatCurrency(pkg.price)})
-                  </option>
-                ))}
-                <option value="Personalizado">Personalizado</option>
-              </select>
+              <label className="block font-medium text-zinc-700 mb-1">
+                Pacote Escolhido ({configForm.type})
+              </label>
+              {(() => {
+                const typePackages = getPackagesForEventType(packages, configForm.type);
+                const addonsSum = configForm.addons.reduce(
+                  (acc, a) => acc + (Number(a.price) || 0),
+                  0
+                );
+                return (
+                  <select
+                    value={configForm.package_name}
+                    onChange={(e) => {
+                      if (e.target.value === 'Personalizado') {
+                        setConfigForm({
+                          ...configForm,
+                          package_name: 'Personalizado',
+                          package_id: '',
+                          package_description:
+                            'Pacote com especificações e entregas customizadas para este evento.',
+                        });
+                        return;
+                      }
+                      const pkgInfo = resolveEventPackage(typePackages, e.target.value);
+                      setConfigForm({
+                        ...configForm,
+                        package_name: pkgInfo.name,
+                        package_id: pkgInfo.id || '',
+                        package_description: pkgInfo.description,
+                        value: (Number(pkgInfo.price) || 0) + addonsSum,
+                      });
+                    }}
+                    className="w-full px-3 py-2 rounded-xl border border-zinc-200 text-zinc-900 bg-white font-medium"
+                  >
+                    {typePackages.map((pkg) => (
+                      <option key={pkg.id} value={pkg.name}>
+                        {pkg.name} ({formatCurrency(pkg.price)})
+                      </option>
+                    ))}
+                    <option value="Personalizado">Personalizado</option>
+                  </select>
+                );
+              })()}
 
               {/* Prévia da Descrição do Pacote Escolhido */}
               {(() => {
@@ -1638,6 +1756,79 @@ function EventDetailContent() {
                 );
               })()}
             </div>
+
+            {/* Adicionais do Evento */}
+            {(() => {
+              const availableSrvs = getServicesForEventType(services, configForm.type);
+              if (availableSrvs.length === 0) return null;
+              const addonsSum = configForm.addons.reduce(
+                (acc, a) => acc + (Number(a.price) || 0),
+                0
+              );
+              return (
+                <div className="p-3.5 rounded-2xl bg-[#FBFBF9] border border-[#EAEAE4] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-zinc-800 uppercase tracking-wider text-[11px]">
+                      Adicionais (soma automática)
+                    </span>
+                    {addonsSum > 0 && (
+                      <span className="text-[11px] font-semibold text-[#8B6E3F]">
+                        + {formatCurrency(addonsSum)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {availableSrvs.map((srv) => {
+                      const isSelected = configForm.addons.some((a) => a.id === srv.id);
+                      return (
+                        <button
+                          key={srv.id}
+                          type="button"
+                          onClick={() => {
+                            const nextAddons = isSelected
+                              ? configForm.addons.filter((a) => a.id !== srv.id)
+                              : [
+                                  ...configForm.addons,
+                                  { id: srv.id, name: srv.name, price: srv.price },
+                                ];
+                            setConfigForm({
+                              ...configForm,
+                              addons: nextAddons,
+                              value: Math.max(
+                                0,
+                                (Number(configForm.value) || 0) +
+                                  (isSelected ? -srv.price : srv.price)
+                              ),
+                            });
+                          }}
+                          className={`text-left p-2.5 rounded-xl border transition-all flex items-center justify-between gap-2 cursor-pointer ${
+                            isSelected
+                              ? 'bg-amber-50/70 border-[#C5A880]'
+                              : 'bg-white border-zinc-200 hover:border-zinc-300'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span
+                              className={`w-4 h-4 rounded-md border flex items-center justify-center shrink-0 ${
+                                isSelected
+                                  ? 'bg-[#C5A880] border-[#C5A880] text-zinc-950'
+                                  : 'border-zinc-300 bg-white'
+                              }`}
+                            >
+                              {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                            </span>
+                            <span className="font-medium text-zinc-900 truncate">{srv.name}</span>
+                          </div>
+                          <span className="font-semibold text-[#8B6E3F] whitespace-nowrap">
+                            + {formatCurrency(srv.price)}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
 
             <div className="p-4 rounded-2xl bg-[#FBFBF9] border border-[#EAEAE4] space-y-3">
               <div className="flex items-center justify-between">

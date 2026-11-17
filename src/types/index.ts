@@ -81,6 +81,12 @@ export interface Lead {
   updated_at: string;
 }
 
+export interface EventAddon {
+  id: string;
+  name: string;
+  price: number;
+}
+
 export interface EventItem {
   id: string;
   client_id: string;
@@ -97,6 +103,7 @@ export interface EventItem {
   package_name?: string;
   package_id?: string;
   package_description?: string;
+  addons?: EventAddon[];
   description?: string;
   notes?: string;
   created_at: string;
