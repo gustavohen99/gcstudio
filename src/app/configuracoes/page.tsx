@@ -819,7 +819,7 @@ END $$;`;
                         ? cloudSyncInfo.error || 'Execute o SQL abaixo no SQL Editor do Supabase.'
                         : cloudSyncInfo.status === 'empty_remote'
                         ? 'Clique em "Enviar Dados Locais para o Supabase" para publicar seus eventos na nuvem.'
-                        : 'Alterações feitas aqui aparecem automaticamente no computador e no celular.'}
+                        : 'Mesclagem inteligente ativa: edições simultâneas entre computador e celular são combinadas automaticamente.'}
                     </span>
                   </div>
                 </div>

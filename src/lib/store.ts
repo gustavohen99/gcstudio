@@ -54,8 +54,15 @@ import {
   buildDefaultTimelineForEvent,
   buildInitialBriefingForEvent,
 } from './event-automation';
+import {
+  mergeSyncStates,
+  pruneSyncMetadata,
+  SyncMetadata,
+  trackLocalStateDiff,
+} from './sync-merge';
 
 const STORAGE_KEY = 'gcstudio_v1_store';
+const SYNC_META_KEY = 'gcstudio_v1_sync_meta';
 
 interface AppStoreState {
   clients: Client[];
@@ -219,6 +226,24 @@ const hydrateStoreState = (
   };
 };
 
+let hasPersistedLocalStore = false;
+
+const loadInitialSyncMeta = (): SyncMetadata => {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(SYNC_META_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        return pruneSyncMetadata(parsed as SyncMetadata);
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load sync metadata from localStorage', e);
+  }
+  return {};
+};
+
 const getInitialState = (): AppStoreState => {
   const defaultState = createDefaultState();
 
@@ -229,6 +254,7 @@ const getInitialState = (): AppStoreState => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
+      hasPersistedLocalStore = true;
       const parsed = JSON.parse(saved);
       return hydrateStoreState(parsed, defaultState);
     }
@@ -245,6 +271,7 @@ export interface CloudSyncInfo {
   status: CloudSyncStatus;
   error?: string;
   lastSyncedAt?: string;
+  mergedConflicts?: number;
 }
 
 const SUPABASE_STATE_ROW_ID = 'main';
@@ -254,13 +281,21 @@ const clientTabId =
     : 'tab-' + Math.random().toString(36).slice(2);
 
 let globalState = getInitialState();
+let lastCommittedState = globalState;
+let localSyncMeta: SyncMetadata = loadInitialSyncMeta();
+let hasDirtyLocalChanges = false;
+let mutationEpoch = 0;
+
 const listeners = new Set<() => void>();
 let cloudSyncInfo: CloudSyncInfo = {
   status: isSupabaseConfigured() ? 'syncing' : 'local',
 };
 let supabaseSyncInitialized = false;
 let supabasePushTimer: ReturnType<typeof setTimeout> | null = null;
+let isPushInFlight = false;
+let pushQueued = false;
 let lastWriteNonce = '';
+let lastSyncedRemoteNonce = localSyncMeta.writeNonce || '';
 
 const emitListeners = () => {
   listeners.forEach((listener) => listener());
@@ -270,6 +305,8 @@ const persistLocalOnly = () => {
   if (typeof window !== 'undefined') {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(globalState));
+      localStorage.setItem(SYNC_META_KEY, JSON.stringify(localSyncMeta));
+      hasPersistedLocalStore = true;
     } catch (e) {
       console.error('Failed to save to localStorage', e);
     }
@@ -282,35 +319,166 @@ const setCloudSyncInfo = (next: CloudSyncInfo) => {
   emitListeners();
 };
 
+const extractRemoteStateAndMeta = (
+  raw: unknown
+): { payload: Partial<AppStoreState>; meta: SyncMetadata } | null => {
+  if (!raw || typeof raw !== 'object') return null;
+  const remoteObj = raw as Partial<AppStoreState> & { _syncMeta?: SyncMetadata };
+  if (!Array.isArray(remoteObj.events) && !Array.isArray(remoteObj.clients)) {
+    return null;
+  }
+  const meta: SyncMetadata =
+    remoteObj._syncMeta && typeof remoteObj._syncMeta === 'object'
+      ? pruneSyncMetadata(remoteObj._syncMeta)
+      : {};
+  const payload = { ...remoteObj };
+  delete payload._syncMeta;
+  return { payload, meta };
+};
+
 const pushStateToSupabase = async (): Promise<{ ok: boolean; error?: string }> => {
   if (!supabase) {
     return { ok: false, error: 'Supabase não configurado.' };
   }
-  const nonce = `${clientTabId}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-  lastWriteNonce = nonce;
-  setCloudSyncInfo({ ...cloudSyncInfo, status: 'syncing', error: undefined });
-
-  const nowIso = new Date().toISOString();
-  const { error } = await supabase.from('studio_state').upsert(
-    {
-      id: SUPABASE_STATE_ROW_ID,
-      data: {
-        ...globalState,
-        _syncMeta: { writeNonce: nonce, tabId: clientTabId, updatedAt: nowIso },
-      },
-      updated_at: nowIso,
-    },
-    { onConflict: 'id' }
-  );
-
-  if (error) {
-    console.error('Supabase sync push error:', error);
-    setCloudSyncInfo({ status: 'error', error: error.message });
-    return { ok: false, error: error.message };
+  if (isPushInFlight) {
+    pushQueued = true;
+    return { ok: true };
   }
 
-  setCloudSyncInfo({ status: 'synced', lastSyncedAt: nowIso });
-  return { ok: true };
+  isPushInFlight = true;
+  setCloudSyncInfo({ ...cloudSyncInfo, status: 'syncing', error: undefined });
+
+  try {
+    let lastError: string | undefined;
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { data: row, error: fetchErr } = await supabase
+        .from('studio_state')
+        .select('data, updated_at')
+        .eq('id', SUPABASE_STATE_ROW_ID)
+        .maybeSingle();
+
+      if (fetchErr) {
+        lastError = fetchErr.message;
+        break;
+      }
+
+      const epochAtWrite = mutationEpoch;
+      let nextRevision = (localSyncMeta.revision || 0) + 1;
+      let mergedWithRemote = false;
+
+      if (row?.data) {
+        const extracted = extractRemoteStateAndMeta(row.data);
+        if (extracted) {
+          const remoteNonce = extracted.meta.writeNonce || '';
+          nextRevision = Math.max(nextRevision, (extracted.meta.revision || 0) + 1);
+
+          // Se outro dispositivo gravou na nuvem desde nossa última sincronização, mescla antes de salvar
+          if (remoteNonce && remoteNonce !== lastSyncedRemoteNonce) {
+            const remoteHydrated = hydrateStoreState(extracted.payload, createDefaultState());
+            const merged = mergeSyncStates(
+              globalState,
+              localSyncMeta,
+              remoteHydrated,
+              extracted.meta
+            );
+            globalState = merged.state;
+            localSyncMeta = merged.meta;
+            lastCommittedState = globalState;
+            lastSyncedRemoteNonce = remoteNonce;
+            persistLocalOnly();
+            mergedWithRemote = true;
+          }
+        }
+      }
+
+      const nonce = `${clientTabId}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const nowIso = new Date().toISOString();
+      const metaToWrite: SyncMetadata = {
+        ...pruneSyncMetadata(localSyncMeta),
+        writeNonce: nonce,
+        tabId: clientTabId,
+        updatedAt: nowIso,
+        revision: nextRevision,
+      };
+      const payloadToWrite = {
+        ...globalState,
+        _syncMeta: metaToWrite,
+      };
+
+      if (row && row.updated_at && attempt < 2) {
+        // Optimistic Concurrency Control: só atualiza se ninguém mudou a linha desde a leitura acima
+        const { data: updatedRows, error: updateErr } = await supabase
+          .from('studio_state')
+          .update({
+            data: payloadToWrite,
+            updated_at: nowIso,
+          })
+          .eq('id', SUPABASE_STATE_ROW_ID)
+          .eq('updated_at', row.updated_at)
+          .select('updated_at');
+
+        if (updateErr) {
+          lastError = updateErr.message;
+          break;
+        }
+
+        if (!updatedRows || updatedRows.length === 0) {
+          // Outro dispositivo gravou no exato milissegundo entre leitura e gravação: refaz leitura + merge
+          lastSyncedRemoteNonce = '';
+          continue;
+        }
+      } else {
+        const { error: upsertErr } = await supabase.from('studio_state').upsert(
+          {
+            id: SUPABASE_STATE_ROW_ID,
+            data: payloadToWrite,
+            updated_at: nowIso,
+          },
+          { onConflict: 'id' }
+        );
+        if (upsertErr) {
+          lastError = upsertErr.message;
+          break;
+        }
+      }
+
+      lastWriteNonce = nonce;
+      lastSyncedRemoteNonce = nonce;
+      localSyncMeta = metaToWrite;
+      if (mutationEpoch === epochAtWrite) {
+        hasDirtyLocalChanges = false;
+      }
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(SYNC_META_KEY, JSON.stringify(localSyncMeta));
+        } catch {
+          // ignore quota issues
+        }
+      }
+
+      setCloudSyncInfo({
+        status: 'synced',
+        lastSyncedAt: nowIso,
+        mergedConflicts:
+          (cloudSyncInfo.mergedConflicts || 0) + (mergedWithRemote ? 1 : 0),
+      });
+      return { ok: true };
+    }
+
+    const errMsg = lastError || 'Conflito simultâneo persistente ao sincronizar com o Supabase.';
+    console.error('Supabase sync push error:', errMsg);
+    setCloudSyncInfo({ ...cloudSyncInfo, status: 'error', error: errMsg });
+    return { ok: false, error: errMsg };
+  } finally {
+    isPushInFlight = false;
+    if (pushQueued) {
+      pushQueued = false;
+      setTimeout(() => {
+        void pushStateToSupabase();
+      }, 60);
+    }
+  }
 };
 
 const pullStateFromSupabase = async (): Promise<{ ok: boolean; empty?: boolean; error?: string }> => {
@@ -327,41 +495,59 @@ const pullStateFromSupabase = async (): Promise<{ ok: boolean; empty?: boolean; 
 
   if (error) {
     console.error('Supabase sync pull error:', error);
-    setCloudSyncInfo({ status: 'error', error: error.message });
+    setCloudSyncInfo({ ...cloudSyncInfo, status: 'error', error: error.message });
     return { ok: false, error: error.message };
   }
 
   if (!row || !row.data || typeof row.data !== 'object') {
-    setCloudSyncInfo({ status: 'empty_remote' });
+    setCloudSyncInfo({ ...cloudSyncInfo, status: 'empty_remote' });
     return { ok: true, empty: true };
   }
 
-  const remoteData = row.data as Partial<AppStoreState> & {
-    _syncMeta?: { writeNonce?: string; updatedAt?: string };
-  };
+  const extracted = extractRemoteStateAndMeta(row.data);
+  if (!extracted) {
+    setCloudSyncInfo({ ...cloudSyncInfo, status: 'empty_remote' });
+    return { ok: true, empty: true };
+  }
 
-  if (remoteData._syncMeta?.writeNonce && remoteData._syncMeta.writeNonce === lastWriteNonce) {
+  const remoteNonce = extracted.meta.writeNonce || '';
+  if (remoteNonce && remoteNonce === lastWriteNonce) {
     setCloudSyncInfo({
+      ...cloudSyncInfo,
       status: 'synced',
-      lastSyncedAt: row.updated_at || remoteData._syncMeta.updatedAt || new Date().toISOString(),
+      lastSyncedAt: row.updated_at || extracted.meta.updatedAt || new Date().toISOString(),
     });
     return { ok: true, empty: false };
   }
 
-  if (Array.isArray(remoteData.events) || Array.isArray(remoteData.clients)) {
-    const cleanPayload = { ...remoteData };
-    delete cleanPayload._syncMeta;
-    globalState = hydrateStoreState(cleanPayload, createDefaultState());
+  const remoteHydrated = hydrateStoreState(extracted.payload, createDefaultState());
+  lastSyncedRemoteNonce = remoteNonce;
+
+  if (!hasPersistedLocalStore && !hasDirtyLocalChanges) {
+    // Dispositivo novo / sem alterações locais ainda: adota a nuvem diretamente sem mesclar dados demo
+    globalState = remoteHydrated;
+    localSyncMeta = extracted.meta;
+    lastCommittedState = globalState;
     persistLocalOnly();
-    setCloudSyncInfo({
-      status: 'synced',
-      lastSyncedAt: row.updated_at || remoteData._syncMeta?.updatedAt || new Date().toISOString(),
-    });
-    return { ok: true, empty: false };
+  } else {
+    // Dispositivo já tinha dados locais ou alterações pendentes: mescla entidade a entidade sem perda
+    const merged = mergeSyncStates(globalState, localSyncMeta, remoteHydrated, extracted.meta);
+    globalState = merged.state;
+    localSyncMeta = merged.meta;
+    lastCommittedState = globalState;
+    persistLocalOnly();
+
+    if (hasDirtyLocalChanges) {
+      void pushStateToSupabase();
+    }
   }
 
-  setCloudSyncInfo({ status: 'empty_remote' });
-  return { ok: true, empty: true };
+  setCloudSyncInfo({
+    ...cloudSyncInfo,
+    status: 'synced',
+    lastSyncedAt: row.updated_at || extracted.meta.updatedAt || new Date().toISOString(),
+  });
+  return { ok: true, empty: false };
 };
 
 const initSupabaseSync = () => {
@@ -392,9 +578,41 @@ const initSupabaseSync = () => {
       void pullStateFromSupabase();
     }
   });
+
+  window.addEventListener('online', () => {
+    void pullStateFromSupabase();
+    if (hasDirtyLocalChanges) {
+      void pushStateToSupabase();
+    }
+  });
+
+  // Sincroniza múltiplas abas abertas no mesmo navegador via localStorage
+  window.addEventListener('storage', (e) => {
+    if (e.key === STORAGE_KEY && e.newValue) {
+      try {
+        const otherPayload = JSON.parse(e.newValue) as Partial<AppStoreState>;
+        const rawMeta = localStorage.getItem(SYNC_META_KEY);
+        const otherMeta: SyncMetadata = rawMeta ? JSON.parse(rawMeta) : {};
+        const otherHydrated = hydrateStoreState(otherPayload, createDefaultState());
+        const merged = mergeSyncStates(globalState, localSyncMeta, otherHydrated, otherMeta);
+        globalState = merged.state;
+        localSyncMeta = merged.meta;
+        lastCommittedState = globalState;
+        emitListeners();
+      } catch {
+        // ignore invalid storage events
+      }
+    }
+  });
 };
 
 const notifyListeners = () => {
+  const nowIso = new Date().toISOString();
+  localSyncMeta = trackLocalStateDiff(lastCommittedState, globalState, localSyncMeta, nowIso);
+  lastCommittedState = globalState;
+  hasDirtyLocalChanges = true;
+  mutationEpoch += 1;
+
   persistLocalOnly();
   if (supabase && typeof window !== 'undefined') {
     if (supabasePushTimer) {
