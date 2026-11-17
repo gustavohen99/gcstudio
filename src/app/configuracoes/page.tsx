@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { useAppStore } from '@/lib/store';
 import { formatCurrency } from '@/lib/utils';
@@ -16,6 +16,8 @@ import {
   Database,
   CheckCircle2,
   Save,
+  Download,
+  Upload,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
@@ -27,6 +29,8 @@ export default function SettingsPage() {
     settings,
     packages,
     services,
+    events,
+    clients,
     updateSettings,
     addPackage,
     deletePackage,
@@ -34,7 +38,10 @@ export default function SettingsPage() {
     deleteService,
     resetToDemoData,
     clearAllUserData,
+    exportStoreData,
+    importStoreData,
   } = useAppStore();
+  const importFileRef = useRef<HTMLInputElement | null>(null);
 
   const [activeTab, setActiveTab] = useState<'studio' | 'pacotes' | 'bancario' | 'dados' | 'supabase'>('studio');
 
@@ -133,6 +140,47 @@ export default function SettingsPage() {
     }
   };
 
+  const handleExportBackup = () => {
+    const payload = exportStoreData();
+    const json = JSON.stringify(payload, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const todayStr = new Date().toISOString().split('T')[0];
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `gcstudio-backup-${todayStr}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    toast(`Backup exportado com ${events.length} evento(s) e ${clients.length} cliente(s)!`, 'success');
+  };
+
+  const handleImportBackup = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      if (
+        !confirm(
+          'Deseja substituir os dados atuais deste navegador pelos registros deste arquivo de backup?'
+        )
+      ) {
+        return;
+      }
+      const result = importStoreData(parsed);
+      toast(
+        `Backup importado: ${result.events} evento(s) e ${result.clients} cliente(s) restaurados!`,
+        'success'
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao ler o arquivo de backup.';
+      toast(message, 'error');
+    }
+  };
+
   const isSupabaseReady = isSupabaseConfigured();
 
   return (
@@ -154,7 +202,7 @@ export default function SettingsPage() {
             { id: 'studio', label: 'Dados da G&C Studio', icon: Building2 },
             { id: 'pacotes', label: 'Pacotes & Serviços', icon: PackageIcon },
             { id: 'bancario', label: 'Dados Bancários & PIX', icon: CreditCard },
-            { id: 'dados', label: 'Gerenciamento de Dados (Demo / Limpeza)', icon: RotateCcw },
+            { id: 'dados', label: 'Dados & Backup', icon: RotateCcw },
             { id: 'supabase', label: 'Conexão Supabase', icon: Database },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -444,8 +492,48 @@ export default function SettingsPage() {
                   Gerenciamento de Dados do Sistema
                 </h3>
                 <p className="text-xs text-zinc-500 mt-1">
-                  Atendendo à diretriz de não manter dados fictícios permanentemente no sistema, você pode limpar os registros de demonstração ou restaurá-los a qualquer momento.
+                  Exporte seus eventos e clientes para levar do localhost para a Vercel, ou limpe/restaure os registros de demonstração.
                 </p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-3 text-xs">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-amber-900 font-semibold">
+                    <Database className="w-4 h-4 text-[#A8875B]" />
+                    <span>Transferir Dados (Localhost ↔ Vercel / Backup)</span>
+                  </div>
+                  <span className="text-[11px] font-medium text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full">
+                    {events.length} eventos • {clients.length} clientes
+                  </span>
+                </div>
+                <p className="text-amber-900/80 leading-relaxed">
+                  Sem o Supabase em nuvem conectado, cada navegador/endereço salva os dados separadamente. Exporte o arquivo aqui no localhost e importe na Vercel (ou em outro aparelho) para transferir tudo em segundos.
+                </p>
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleExportBackup}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-medium shadow-xs cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5 text-[#C5A880]" />
+                    <span>Exportar Backup (.json)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => importFileRef.current?.click()}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-zinc-50 text-zinc-800 border border-zinc-300 font-medium shadow-xs cursor-pointer"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-[#A8875B]" />
+                    <span>Importar Backup (.json)</span>
+                  </button>
+                  <input
+                    ref={importFileRef}
+                    type="file"
+                    accept="application/json,.json"
+                    onChange={handleImportBackup}
+                    className="hidden"
+                  />
+                </div>
               </div>
 
               <div className="p-5 rounded-2xl bg-rose-50 border border-rose-200 space-y-3 text-xs">

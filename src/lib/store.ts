@@ -75,29 +75,127 @@ interface AppStoreState {
   portfolioTestimonials: PortfolioTestimonial[];
 }
 
-const getInitialState = (): AppStoreState => {
-  const defaultState: AppStoreState = {
-    clients: initialClients,
-    events: initialEvents,
-    leads: initialLeads,
-    packages: initialPackages,
-    services: initialServices,
-    quotes: initialQuotes,
-    contracts: initialContracts,
-    payments: initialPayments,
-    briefings: initialBriefings,
-    checklists: initialChecklists,
-    timelines: initialTimelines,
-    galleries: initialGalleries,
-    photos: samplePhotos,
-    deliveries: initialDeliveries,
-    messageTemplates: initialMessageTemplates,
-    notifications: initialNotifications,
-    settings: initialSettings,
-    portfolioConfig: initialPortfolioConfig,
-    portfolioItems: initialPortfolioItems,
-    portfolioTestimonials: initialPortfolioTestimonials,
+const createDefaultState = (): AppStoreState => ({
+  clients: initialClients,
+  events: initialEvents,
+  leads: initialLeads,
+  packages: initialPackages,
+  services: initialServices,
+  quotes: initialQuotes,
+  contracts: initialContracts,
+  payments: initialPayments,
+  briefings: initialBriefings,
+  checklists: initialChecklists,
+  timelines: initialTimelines,
+  galleries: initialGalleries,
+  photos: samplePhotos,
+  deliveries: initialDeliveries,
+  messageTemplates: initialMessageTemplates,
+  notifications: initialNotifications,
+  settings: initialSettings,
+  portfolioConfig: initialPortfolioConfig,
+  portfolioItems: initialPortfolioItems,
+  portfolioTestimonials: initialPortfolioTestimonials,
+});
+
+const hydrateStoreState = (
+  parsed: Partial<AppStoreState>,
+  defaultState: AppStoreState
+): AppStoreState => {
+  const packagesList = parsed.packages || initialPackages;
+  const loadedEvents: EventItem[] = (parsed.events || initialEvents).map((ev: EventItem) => {
+    const pkg = resolveEventPackage(
+      packagesList,
+      ev.package_name,
+      ev.package_id,
+      ev.package_description
+    );
+    return {
+      ...ev,
+      package_name: ev.package_name || pkg.name,
+      package_id: ev.package_id || pkg.id,
+      package_description: ev.package_description || pkg.description,
+    };
+  });
+  const loadedPayments: Payment[] = [...(parsed.payments || initialPayments)];
+
+  // Garantir que todos os eventos ativos que possuem valor contratado apareçam no Financeiro
+  loadedEvents.forEach((ev) => {
+    if (ev.status !== 'cancelado' && ev.value > 0) {
+      const evPayments = loadedPayments.filter((p) => p.event_id === ev.id);
+      if (evPayments.length === 0) {
+        const depVal = Math.min(Math.max(0, Number(ev.deposit_value) || 0), ev.value);
+        const remVal = Math.max(0, ev.value - depVal);
+        if (depVal > 0) {
+          loadedPayments.push({
+            id: `pay-${ev.id}-dep`,
+            event_id: ev.id,
+            event_name: ev.name,
+            client_id: ev.client_id,
+            client_name: ev.client_name,
+            description: 'Entrada / Sinal do Evento',
+            amount: depVal,
+            due_date: ev.created_at?.split('T')[0] || ev.date,
+            status: ev.deposit_paid ? 'pago' : 'pendente',
+            paid_at: ev.deposit_paid ? ev.created_at : undefined,
+            payment_method: 'PIX',
+            created_at: ev.created_at || new Date().toISOString(),
+          });
+        }
+        if (remVal > 0) {
+          loadedPayments.push({
+            id: `pay-${ev.id}-rem`,
+            event_id: ev.id,
+            event_name: ev.name,
+            client_id: ev.client_id,
+            client_name: ev.client_name,
+            description: depVal > 0 ? 'Saldo Restante do Evento' : 'Valor Total do Evento',
+            amount: remVal,
+            due_date: ev.date,
+            status: 'pendente',
+            payment_method: 'PIX',
+            created_at: ev.created_at || new Date().toISOString(),
+          });
+        }
+      }
+    }
+  });
+
+  return {
+    ...defaultState,
+    ...parsed,
+    events: loadedEvents,
+    payments: loadedPayments,
+    settings: {
+      ...initialSettings,
+      ...(parsed.settings || {}),
+      logo_url: '/logo-white.png',
+    },
+    portfolioConfig: parsed.portfolioConfig?.hero?.title?.includes('Eternizando')
+      ? parsed.portfolioConfig
+      : initialPortfolioConfig,
+    portfolioItems: ((parsed.portfolioItems || []).some((item: any) => item.id?.startsWith('port-'))
+      ? parsed.portfolioItems!
+      : initialPortfolioItems
+    ).map((item: any) => {
+      const defaultMatch = initialPortfolioItems.find((d) => d.id === item.id);
+      return {
+        ...item,
+        gallery_photos:
+          item.gallery_photos && item.gallery_photos.length > 0
+            ? item.gallery_photos
+            : defaultMatch?.gallery_photos || [item.image],
+        story: item.story || defaultMatch?.story || item.subtitle,
+        event_date: item.event_date || defaultMatch?.event_date,
+        gallery_id: item.gallery_id || defaultMatch?.gallery_id,
+      };
+    }),
+    portfolioTestimonials: parsed.portfolioTestimonials || initialPortfolioTestimonials,
   };
+};
+
+const getInitialState = (): AppStoreState => {
+  const defaultState = createDefaultState();
 
   if (typeof window === 'undefined') {
     return defaultState;
@@ -107,91 +205,7 @@ const getInitialState = (): AppStoreState => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      const packagesList = parsed.packages || initialPackages;
-      const loadedEvents: EventItem[] = (parsed.events || initialEvents).map((ev: EventItem) => {
-        const pkg = resolveEventPackage(packagesList, ev.package_name, ev.package_id, ev.package_description);
-        return {
-          ...ev,
-          package_name: ev.package_name || pkg.name,
-          package_id: ev.package_id || pkg.id,
-          package_description: ev.package_description || pkg.description,
-        };
-      });
-      const loadedPayments: Payment[] = [...(parsed.payments || initialPayments)];
-
-      // Garantir que todos os eventos ativos que possuem valor contratado apareçam no Financeiro
-      loadedEvents.forEach((ev) => {
-        if (ev.status !== 'cancelado' && ev.value > 0) {
-          const evPayments = loadedPayments.filter((p) => p.event_id === ev.id);
-          if (evPayments.length === 0) {
-            const depVal = Math.min(Math.max(0, Number(ev.deposit_value) || 0), ev.value);
-            const remVal = Math.max(0, ev.value - depVal);
-            if (depVal > 0) {
-              loadedPayments.push({
-                id: `pay-${ev.id}-dep`,
-                event_id: ev.id,
-                event_name: ev.name,
-                client_id: ev.client_id,
-                client_name: ev.client_name,
-                description: 'Entrada / Sinal do Evento',
-                amount: depVal,
-                due_date: ev.created_at?.split('T')[0] || ev.date,
-                status: ev.deposit_paid ? 'pago' : 'pendente',
-                paid_at: ev.deposit_paid ? ev.created_at : undefined,
-                payment_method: 'PIX',
-                created_at: ev.created_at || new Date().toISOString(),
-              });
-            }
-            if (remVal > 0) {
-              loadedPayments.push({
-                id: `pay-${ev.id}-rem`,
-                event_id: ev.id,
-                event_name: ev.name,
-                client_id: ev.client_id,
-                client_name: ev.client_name,
-                description: depVal > 0 ? 'Saldo Restante do Evento' : 'Valor Total do Evento',
-                amount: remVal,
-                due_date: ev.date,
-                status: 'pendente',
-                payment_method: 'PIX',
-                created_at: ev.created_at || new Date().toISOString(),
-              });
-            }
-          }
-        }
-      });
-
-      return {
-        ...defaultState,
-        ...parsed,
-        events: loadedEvents,
-        payments: loadedPayments,
-        settings: {
-          ...initialSettings,
-          ...(parsed.settings || {}),
-          logo_url: '/logo-white.png',
-        },
-        portfolioConfig: parsed.portfolioConfig?.hero?.title?.includes('Eternizando')
-          ? parsed.portfolioConfig
-          : initialPortfolioConfig,
-        portfolioItems: ((parsed.portfolioItems || []).some((item: any) => item.id?.startsWith('port-'))
-          ? parsed.portfolioItems
-          : initialPortfolioItems
-        ).map((item: any) => {
-          const defaultMatch = initialPortfolioItems.find((d) => d.id === item.id);
-          return {
-            ...item,
-            gallery_photos:
-              item.gallery_photos && item.gallery_photos.length > 0
-                ? item.gallery_photos
-                : defaultMatch?.gallery_photos || [item.image],
-            story: item.story || defaultMatch?.story || item.subtitle,
-            event_date: item.event_date || defaultMatch?.event_date,
-            gallery_id: item.gallery_id || defaultMatch?.gallery_id,
-          };
-        }),
-        portfolioTestimonials: parsed.portfolioTestimonials || initialPortfolioTestimonials,
-      };
+      return hydrateStoreState(parsed, defaultState);
     }
   } catch (e) {
     console.error('Failed to load state from localStorage', e);
@@ -1632,6 +1646,35 @@ export const useAppStore = () => {
     notifyListeners();
   }, []);
 
+  const exportStoreData = useCallback(() => {
+    return {
+      app: 'gcstudio',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      data: globalState,
+    };
+  }, []);
+
+  const importStoreData = useCallback((raw: unknown) => {
+    if (!raw || typeof raw !== 'object') {
+      throw new Error('Arquivo de backup inválido.');
+    }
+    const envelope = raw as { app?: string; data?: Partial<AppStoreState> } & Partial<AppStoreState>;
+    const payload: Partial<AppStoreState> =
+      envelope.data && typeof envelope.data === 'object' ? envelope.data : envelope;
+
+    if (!Array.isArray(payload.events) && !Array.isArray(payload.clients)) {
+      throw new Error('Este arquivo não contém registros válidos de eventos ou clientes do G&C Studio.');
+    }
+
+    globalState = hydrateStoreState(payload, createDefaultState());
+    notifyListeners();
+    return {
+      clients: globalState.clients.length,
+      events: globalState.events.length,
+    };
+  }, []);
+
   return {
     ...state,
     addClient,
@@ -1704,5 +1747,7 @@ export const useAppStore = () => {
     deletePortfolioTestimonial,
     resetToDemoData,
     clearAllUserData,
+    exportStoreData,
+    importStoreData,
   };
 };
